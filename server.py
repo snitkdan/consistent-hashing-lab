@@ -4,6 +4,9 @@ class Server:
         self.kvstore = {}
         self.access_tracking = {}
 
+    def name(self):
+        return self.name
+
     def put(self, k, v):
         self.kvstore[k] = v
         if k not in self.access_tracking:
@@ -15,6 +18,7 @@ class Server:
         if k not in self.access_tracking:
             self.access_tracking[k] += 1
         return self.kvstore[k]
-        
 
-    def get_accesses()
+    def remove(self, k):
+        if k not in self.access_tracking:
+            self.access_tracking[k] += 1
