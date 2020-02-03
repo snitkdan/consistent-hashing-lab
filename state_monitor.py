@@ -6,6 +6,7 @@ class StateMonitor:
         self.previous = None
         self.key_tracking = {}
         self.failed = False
+        self.moveCounter = {} # TODO 
         pass
 
     def put(self, key):
@@ -52,7 +53,7 @@ class StateMonitor:
         minimum = float('inf')
         maximum = 0
         total = len(self.key_tracking)
-        # maybe do a variance calculation
+        nums = []
         print('\n--------------- stats ---------------')
         if self.failed:
             print("FAIL\nFailed to complete workload without errors")
@@ -63,5 +64,8 @@ class StateMonitor:
                 minimum = curr
             if curr > maximum:
                 maximum = curr
+            nums.append(curr)
             print("{} has {} keys".format(shard, curr))
-        print("minimum: {} \nmaximum: {} \naverage: {}".format(minimum, maximum, total / len(shards)))
+        mean = total / len(shards)
+        variance = sum((i - mean) ** 2 for i in nums) / len(nums)
+        print("minimum: {} \nmaximum: {} \nmean: {} \nvariance: {}".format(minimum, maximum, mean, variance))
