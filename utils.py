@@ -1,2 +1,2 @@
-def hash_function():
-    return lambda a: hash(a) & 0xffffffff
+def hash_fn(a):
+    return hash(a) & 0xffffffff
