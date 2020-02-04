@@ -8,6 +8,7 @@ class StateMonitor:
         self.failed = False
         self.moveCounter = {} # TODO 
         # TODO: total moved?
+        
     def put(self, key):
         self.key_tracking[key] = self.key_tracking.get(key, 0) + 1
 
