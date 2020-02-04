@@ -1,4 +1,4 @@
-from load_balancer import LoadBalancer
+from .load_balancer import LoadBalancer
 from utils import hash_fn
 
 class UselessLoadBalancer(LoadBalancer):
@@ -8,7 +8,6 @@ class UselessLoadBalancer(LoadBalancer):
     def add_shard(self, shard_name):
         super().add_shard(shard_name)
         # TODO rebalance 
-
         # Also remember to remove the keys from the shards that moved
 
     def remove_shard(self, shard_name):
@@ -17,6 +16,7 @@ class UselessLoadBalancer(LoadBalancer):
         shard = self.shard_list[0]
         for key in kvstore:
             self.shards[shard].put(key, kvstore[key])
+
     def put(self, k):
         # Figure out where to put it
         shard = self.shard_list[0]

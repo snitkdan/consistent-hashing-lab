@@ -1,4 +1,4 @@
-from load_balancer import LoadBalancer
+from .load_balancer import LoadBalancer
 from utils import hash_fn
 
 class BrokenLoadBalancer(LoadBalancer):
@@ -8,7 +8,6 @@ class BrokenLoadBalancer(LoadBalancer):
     def add_shard(self, shard_name):
         super().add_shard(shard_name)
         # TODO rebalance 
-
         # Also remember to remove the keys from the shards that moved
 
     def remove_shard(self, shard_name):
