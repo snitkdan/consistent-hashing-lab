@@ -1,5 +1,6 @@
 from state_monitor import StateMonitor
 import argparse
+from LoadBalancers.load_balancer_broken import BrokenLoadBalancer
 from LoadBalancers.load_balancer_useless import UselessLoadBalancer
 from LoadBalancers.load_balancer_simple import SimpleLoadBalancer
 from LoadBalancers.load_balancer_hash_key import HashKeyLoadBalancer
@@ -8,46 +9,66 @@ from LoadBalancers.load_balancer_hash_shard_mult import ConsistentHashingLoadBal
 
 def run_test(load_balancer, workload, debug):
     sm = StateMonitor()
-    
+    errors = {}
+    create_count = 0
+    remove_count = 0
     f = open(workload, "r")
     for line in f:
         command, arg = line.split()
         if command == 'create':
-            if (debug): sm.check_valid(load_balancer.shards)
+            if (debug): errors["create_before_{}".format(create_count)] = sm.check_valid(load_balancer.shards)
             load_balancer.add_shard(arg)
-            if (debug): sm.check_valid(load_balancer.shards)
+            if (debug): errors["create_after_{}".format(create_count)] = sm.check_valid(load_balancer.shards)
+            create_count += 1
         elif command == 'remove':
-            if (debug): sm.check_valid(load_balancer.shards)
+            if (debug): errors["remove_after_{}".format(remove_count)] = sm.check_valid(load_balancer.shards)
             load_balancer.remove_shard(arg)
-            if (debug): sm.check_valid(load_balancer.shards)
+            if (debug): errors["remove_after_{}".format(remove_count)] = sm.check_valid(load_balancer.shards)
+            remove_count += 1
         elif command == 'put':
             load_balancer.put(arg)
             sm.put(arg)
             # sm.check_valid(load_balancer.shards)
-    sm.check_valid(load_balancer.shards)
-    sm.get_stats(load_balancer.shards)
-
+    errors['final'] = sm.check_valid(load_balancer.shards)
+    stats = sm.get_stats(load_balancer.shards)
+    return stats, errors
 
 
 def part0(workload, debug):
-    load_balancer = UselessLoadBalancer()
-    run_test(load_balancer, workload, debug)
+    score = 0
+    # load_balancer = UselessLoadBalancer()
+    load_balancer = BrokenLoadBalancer()
+    stats, errors = run_test(load_balancer, workload, debug)
+    print(stats, errors)
+    return score
 
 def part1(workload, debug):
+    score = 0
     load_balancer = SimpleLoadBalancer()
-    run_test(load_balancer, workload, debug)
+    stats, errors = run_test(load_balancer, workload, debug)
+    print(stats, errors)
+    return score
 
 def part2(workload, debug):
+    score = 0
     load_balancer = HashKeyLoadBalancer()
-    run_test(load_balancer, workload, debug)
+    stats, errors = run_test(load_balancer, workload, debug)
+    print(stats, errors)
+    return score
 
 def part3(workload, debug):
+    score = 0
     load_balancer = HashShardLoadBalancer()
-    run_test(load_balancer, workload, debug)
-
+    stats, errors = run_test(load_balancer, workload, debug)
+    print(stats, errors)
+    return score
+    
 def part4(workload, debug):
+    score = 0
     load_balancer = ConsistentHashingLoadBalancer()
-    run_test(load_balancer, workload, debug)
+    stats, errors = run_test(load_balancer, workload, debug)
+    print(stats, errors)
+    return score
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='parsing options for running tests')

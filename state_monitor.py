@@ -8,7 +8,7 @@ class StateMonitor:
         self.failed = False
         self.moveCounter = {} # TODO 
         # TODO: total moved?
-        
+
     def put(self, key):
         self.key_tracking[key] = self.key_tracking.get(key, 0) + 1
 
@@ -48,6 +48,7 @@ class StateMonitor:
         else:
             # print("PASS")
             pass
+        return errors if errors else None
 
     def get_stats(self, shards):
         minimum = float('inf')
@@ -69,3 +70,4 @@ class StateMonitor:
         mean = total / len(shards)
         variance = sum((i - mean) ** 2 for i in nums) / len(nums)
         print("minimum: {} \nmaximum: {} \nmean: {} \nvariance: {}".format(minimum, maximum, mean, variance))
+        return {"minimum": minimum, "maximum": maximum, "mean": mean, "variance": variance}
