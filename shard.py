@@ -1,6 +1,6 @@
 class Shard:
-    def __init__(self, name):
-        self.name = name
+    def __init__(self, server_name):
+        self.server_name = server_name
         self.kvstore = {}
 
     def put(self, k, v):

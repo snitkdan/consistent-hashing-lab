@@ -1,7 +1,7 @@
 # Consistent Hashing
 What is load balancing? Load balancing is the act of distributing workloads in a way that is balanced across various resources. Consistent Hashing is a method for load balancing that utilizes a hash function to distribute workloads in a consistent manner. This lab will (hopefully) help you build intuition for why consistent hashing is used. 
 
-In this lab, you will be writing various load balancers to handle a workload consisting of a sequence of puts, shard additions, and shard removals. The workload will be based on the [twitter social graph](http://an.kaist.ac.kr/traces/WWW2010.html). A simpler, sample workload will also be provided for you to test things separately. Each load balancer you write will become increasingly more complex until you eventually implement Consistent Hashing. 
+In this lab, you will be writing various load balancers to handle a workload consisting of a sequence of puts, shard additions, and shard removals. The workload will be based on the [twitter social graph](http://an.kaist.ac.kr/traces/WWW2010.html). A simpler, sample workload will also be provided for you to test things separately. Each load balancer you write will become increasingly more complex until you eventually implement Consistent Hashing. (TODO: a workload with words.) 
 
 ## Prerequisites
 - python3 or rust, both will probably be supported at some point in time
@@ -15,7 +15,7 @@ Terminology is everything. It will make or break your understanding of papers, p
 * Nodes are communication endpoints, e.g. if you have a client and a server, you have two nodes. 
 * Sharding is a way to partition data into shards, which are faster to utilize and easier to manage. 
 * Latency is how long it takes to do something after you requested it to be done.
-* Throughput is 
+* Throughput is how much stuff can be processed in a given amount of time.
 
 ## Classes
 
@@ -58,18 +58,29 @@ Is this a realistic problem setup (or is everything just a simulation)? Oftentim
 You can't load balance if you don't have a load to balance. `LoadBalancers/load_balancer_useless.py` shows how to put things in shards within the framework. This is a useless load balancer because all the work is distributed to the first node. If this server dies, then all the information is lost unless someone backed it up (look up State Machine Replication if interested). Or if there's a lot of traffic, then the latency and throughput might not be so great. 
 
 ## Part 1: Simple Load Balancer
-A naive way to This is unrealistic 
+A naive way to load balance would be to assign everything based on the first character of the key and modding by the number of shards. Implement `LoadBalancers/load_balancer_simple.py`. 
+
+What did the distribution of keys look like? TODO: Talk about variance
 
 ## Part 2: Hash the key
+If you did the last part, hopefully you saw that there was an uneven distribution of keys. We will fix this by introducing hashes into the mix. (TODO: Talk about hashing.) This time, we will hash the key and then mod by the number of shards. Implement `LoadBalancers/load_balancer_hash_key.py`.
 
-## Part 3: Hash the Shard
+What happened when you add and remove shards? Each time you add or remove a shard, how many keys do you need to move?
+
+## Part 3: Hash the Server Name
+TODO: Write some buildup for this part
+Moving all the keys each time might not be necessary, especially for the case when the keys get assigned to the same location. Here, we will try to avoid redistributing keys unnecessarily. Implement `LoadBalancers/load_balancer_hash_shard_once.py`.
+
+How many keys moved when you added and removed shards? 
 
 ## Part 4: Consistent Hashing
+TODO: Write some buildup for this part
+Now we hash the server name multiple times. Implement `LoadBalancers/load_balancer_hash_shard_mult.py`.
 
 ## Reflection questions
-1. 
-2. 
-3. 
+1. What happens when you increase the number of times you hash the server name in the consistent hashing scheme? 
+2. What are some benefits/drawbacks when increasing the number of times that you hash the server name?
+3. How might you balance the workload on a distribution in which some keys were a lot more popular than other keys?
 
 ## Acknowledgements 
 The sections are based on this [video](https://cs.brown.edu/video/392/?quality=hires) by Doug Woos. This was a project for CSE599c: Data Center Systems offered in Winter 2020. 
