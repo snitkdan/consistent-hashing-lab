@@ -18,5 +18,5 @@ class LoadBalancer:
             return s.kvstore
         return None
 
-    def put(self, key):
+    def put(self, key, value=0):
         raise NotImplementedError
