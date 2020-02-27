@@ -24,16 +24,24 @@ class StateMonitor:
             for key in kv:
                 if key in tracking:
                     self.failed = True
-                    self.key_history[key].append((self.previous[key], self.key_tracking[key]))
-                    raise errors.KeyPresentInMultipleShardsError("Found key '{}' in {} when already in {}, expecting count {}\nhistory: {}".format(key, shard, tracking[key], self.key_tracking[key], self.key_history[key]))
+                    if debug:
+                        for shard in shards:
+                            print(shard, shards[shard].kvstore)
+                    self.key_history[key].append((self.previous[key], self.key_tracking[key] - kv[key]))
+                    self.key_history[key].append((shard, kv[key]))
+                    raise errors.KeyPresentInMultipleShardsError("Found key '{}' in {} with count {} when already in {} with count {}\nhistory: {}".format(key, shard, kv[key], tracking[key], self.key_tracking[key] - kv[key], self.key_history[key]))
                 tracking[key] = shard
         for shard in shards:
             kv = shards[shard].kvstore
             for key in kv:
                 if kv[key] != self.key_tracking[key]:
                     self.failed = True
+                    if debug:
+                        for shard in shards:
+                            print(shard, shards[shard].kvstore)
                     self.key_history[key].append((self.previous[key], self.key_tracking[key]))
-                    raise errors.ValueLostInTransitionError("The count was lost when moving key '{}'. Expected count {}, got count {}.\nhistory: {}".format(key, self.key_tracking[key], kv[key], self.key_history[key]))
+                    self.key_history[key].append((tracking[key], kv[key]))
+                    raise errors.ValueLostInTransitionError("The count was lost when moving key '{}' from {} to {}. Expected count {}, got count {}.\nhistory: {}".format(key, self.previous[key], shard, self.key_tracking[key], kv[key], self.key_history[key]))
                 seen.add(key)
         if self.previous is not None:
             moved = 0
@@ -49,6 +57,9 @@ class StateMonitor:
         diff = set(self.key_tracking.keys()) - seen
         if diff:
             self.failed = True
+            if debug:
+                for shard in shards:
+                    print(shard, shards[shard].kvstore)
             raise errors.KeyLostInTransitionError("keys {} not found on any shard".format(diff))
 
     def get_stats(self, shards, debug=False):

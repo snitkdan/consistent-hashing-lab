@@ -8,51 +8,81 @@ from LoadBalancersSoln.load_balancer_hash_key import HashKeyLoadBalancer
 from LoadBalancersSoln.load_balancer_hash_shard_once import HashShardLoadBalancer
 from LoadBalancersSoln.load_balancer_hash_shard_mult import ConsistentHashingLoadBalancer
 
+import inspect
+import tqdm
+# store builtin print
+old_print = print
+def new_print(*args, **kwargs):
+    # if tqdm.tqdm.write raises error, use builtin print
+    try:
+        tqdm.tqdm.write(*args, **kwargs)
+    except:
+        old_print(*args, ** kwargs)
+# globaly replace print with new_print
+inspect.builtins.print = new_print
+
+import mmap
+def get_num_lines(file_path):
+    fp = open(file_path, "r+")
+    buf = mmap.mmap(fp.fileno(), 0)
+    lines = 0
+    while buf.readline():
+        lines += 1
+    return lines
+
 def run_test(load_balancer, workload, debug):
     sm = StateMonitor()
     create_count = 0
     remove_count = 0
-    f = open(workload, "r")
-    for line in f:
-        command, arg = line.split()
-        # print(command, arg)
-        if command == 'create':
-            try:
-                check_valid(sm, load_balancer.shards, debug)
+    with open(workload) as f:
+        for line in tqdm.tqdm(f, total=get_num_lines(workload)):
+            command, arg = line.split()
+            if command == 'create':
+                if debug: print('\n{} {}'.format(command, arg))
+
+                try:
+                    check_valid(sm, load_balancer.shards, debug)
+                except Error as e:
+                    print('\nbefore create {}\n{}'.format(create_count, e))
+                    return None, sm.failed
+
                 load_balancer.add_shard(arg)
-                check_valid(sm, load_balancer.shards, debug)
-            except Error as e:
-                print(e, 'in create {}'.format(create_count))
-                return None, sm.failed
-            create_count += 1
-        elif command == 'remove':
-            try:
-                check_valid(sm, load_balancer.shards, debug)
+
+                try:
+                    check_valid(sm, load_balancer.shards, debug)
+                except Error as e:
+                    print('\nafter create {}\n{}'.format(create_count, e))
+                    return None, sm.failed
+
+                create_count += 1
+            elif command == 'remove':
+                if debug: print('\n{} {}'.format(command, arg))
+
+                try:
+                    check_valid(sm, load_balancer.shards, debug)
+                except Error as e:
+                    print('\nbefore remove {}\n{}'.format(create_count, e))
+                    return None, sm.failed
+
                 load_balancer.remove_shard(arg)
-                check_valid(sm, load_balancer.shards, debug)
-            except Error as e:
-                print(e, 'in create {}'.format(create_count))
-                return None, sm.failed
-                
-            remove_count += 1
-        elif command == 'put':
-            # try:
-                # check_valid(sm, load_balancer.shards, debug)
-                # load_balancer.put(arg)
-                # sm.put(arg)
-                # check_valid(sm, load_balancer.shards, debug)
-            # except Error as e:
-            #     print(e, 'in create {}'.format(create_count))
-            #     break
-            load_balancer.put(arg)
-            sm.put(arg)
-    try:
-        check_valid(sm, load_balancer.shards, debug)
-    except Error as e:
-        print(e, 'by the end')
-        return None, sm.failed
-    stats = sm.get_stats(load_balancer.shards, debug)
-    return stats, sm.failed
+
+                try:
+                    check_valid(sm, load_balancer.shards, debug)
+                except Error as e:
+                    print('\nafter remove {}\n{}'.format(create_count, e))
+                    return None, sm.failed
+
+                remove_count += 1
+            elif command == 'put':
+                load_balancer.put(arg)
+                sm.put(arg)
+        try:
+            check_valid(sm, load_balancer.shards, debug)
+        except Error as e:
+            print('\nat the end\n{}'.format(e))
+            return None, sm.failed
+        stats = sm.get_stats(load_balancer.shards, debug)
+        return stats, sm.failed
 
 def check_valid(sm, shards, debug):
     sm.check_valid(shards, debug)
