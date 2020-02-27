@@ -9,3 +9,10 @@ put acai
 remove server_A
 put durian
 put pandan
+put durian
+remove server_B
+create server_A
+put durian
+create server_B
+create server_D
+put durian

@@ -1,80 +1,100 @@
 from state_monitor import StateMonitor
+from errors import Error
 import argparse
 from LoadBalancers.load_balancer_broken import BrokenLoadBalancer
 from LoadBalancers.load_balancer_useless import UselessLoadBalancer
-from LoadBalancers.load_balancer_simple import SimpleLoadBalancer
-from LoadBalancers.load_balancer_hash_key import HashKeyLoadBalancer
-from LoadBalancers.load_balancer_hash_shard_once import HashShardLoadBalancer
-from LoadBalancers.load_balancer_hash_shard_mult import ConsistentHashingLoadBalancer
+from LoadBalancersSoln.load_balancer_simple import SimpleLoadBalancer
+from LoadBalancersSoln.load_balancer_hash_key import HashKeyLoadBalancer
+from LoadBalancersSoln.load_balancer_hash_shard_once import HashShardLoadBalancer
+from LoadBalancersSoln.load_balancer_hash_shard_mult import ConsistentHashingLoadBalancer
 
 def run_test(load_balancer, workload, debug):
     sm = StateMonitor()
-    errors = []
     create_count = 0
     remove_count = 0
     f = open(workload, "r")
     for line in f:
         command, arg = line.split()
+        # print(command, arg)
         if command == 'create':
-            errors.append(["create_before_{}".format(create_count), sm.check_valid(load_balancer.shards, debug)])
-            load_balancer.add_shard(arg)
-            errors.append(["create_after_{}".format(create_count), sm.check_valid(load_balancer.shards, debug)])
+            try:
+                check_valid(sm, load_balancer.shards, debug)
+                load_balancer.add_shard(arg)
+                check_valid(sm, load_balancer.shards, debug)
+            except Error as e:
+                print(e, 'in create {}'.format(create_count))
+                break
             create_count += 1
         elif command == 'remove':
-            errors.append(["remove_before_{}".format(create_count), sm.check_valid(load_balancer.shards, debug)])
-            load_balancer.remove_shard(arg)
-            errors.append(["remove_after_{}".format(create_count), sm.check_valid(load_balancer.shards, debug)])
+            try:
+                check_valid(sm, load_balancer.shards, debug)
+                load_balancer.remove_shard(arg)
+                check_valid(sm, load_balancer.shards, debug)
+            except Error as e:
+                print(e, 'in create {}'.format(create_count))
+                break
             remove_count += 1
         elif command == 'put':
+            # try:
+                # check_valid(sm, load_balancer.shards, debug)
+                # load_balancer.put(arg)
+                # sm.put(arg)
+                # check_valid(sm, load_balancer.shards, debug)
+            # except Error as e:
+            #     print(e, 'in create {}'.format(create_count))
+            #     break
             load_balancer.put(arg)
             sm.put(arg)
-            # sm.check_valid(load_balancer.shards)
-    errors.append(['final', sm.check_valid(load_balancer.shards, debug)])
+    try:
+        check_valid(sm, load_balancer.shards, debug)
+    except Error as e:
+        print(e, 'by the end')
     stats = sm.get_stats(load_balancer.shards, debug)
-    return stats, errors
+    return stats, sm.failed
 
+def check_valid(sm, shards, debug):
+    sm.check_valid(shards, debug)
 
 def part0(workload, debug, max_score=0):
     # load_balancer = UselessLoadBalancer()
+    print('------------------------- testing part 0 -----------------------------------')
     load_balancer = BrokenLoadBalancer()
-    stats, errors = run_test(load_balancer, workload, debug)
-    score = eval_results(stats, errors, max_score, 0)
+    stats, fail = run_test(load_balancer, workload, debug)
+    score = eval_results(stats, fail, max_score, 0, debug)
     return score
 
 def part1(workload, debug, max_score=5):
+    print('------------------------- testing part 1 -----------------------------------')
     load_balancer = SimpleLoadBalancer()
-    stats, errors = run_test(load_balancer, workload, debug)
-    score = eval_results(stats, errors, max_score, 1)
+    stats, fail = run_test(load_balancer, workload, debug)
+    score = eval_results(stats, fail, max_score, 1, debug)
     return score
 
 def part2(workload, debug, max_score=10):
+    print('------------------------- testing part 2 -----------------------------------')
     load_balancer = HashKeyLoadBalancer()
-    stats, errors = run_test(load_balancer, workload, debug)
-    score = eval_results(stats, errors, max_score, 2)
+    stats, fail = run_test(load_balancer, workload, debug)
+    score = eval_results(stats, fail, max_score, 2, debug)
     return score
 
 def part3(workload, debug, max_score=15):
+    print('------------------------- testing part 3 -----------------------------------')
     load_balancer = HashShardLoadBalancer()
-    stats, errors = run_test(load_balancer, workload, debug)
-    score = eval_results(stats, errors, max_score, 3)
+    stats, fail = run_test(load_balancer, workload, debug)
+    score = eval_results(stats, fail, max_score, 3, debug)
     return score
 
 def part4(workload, debug, max_score=20):
+    print('------------------------- testing part 4 -----------------------------------')
     load_balancer = ConsistentHashingLoadBalancer()
-    stats, errors = run_test(load_balancer, workload, debug)
-    score = eval_results(stats, errors, max_score, 4)
+    stats, fail = run_test(load_balancer, workload, debug)
+    score = eval_results(stats, fail, max_score, 4, debug)
     return score
 
-def eval_results(stats, errors, max_score, part):
+def eval_results(stats, fail, max_score, part, debug):
+    if fail:
+        return 0
     score = max_score
-    for error in errors:
-        print("---{}---".format(error[0]))
-        if error[1]:
-            for problems in error[1]:
-                print(problems)
-            score = 0
-        else:
-            print("None")
 
     print(stats)
     # TODO: Probably case depending on how well each performs, I might calculate some bounds later
@@ -84,27 +104,27 @@ def eval_results(stats, errors, max_score, part):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='parsing options for running tests')
-    parser.add_argument('-p', metavar='part', type=int, 
+    parser.add_argument('-p', metavar='part', type=str, 
                         help='part in the lab [0..4]')
     parser.add_argument('-w', metavar='workload', type=str, 
                         help='workload to test this on [simple or default]', default='default')
     parser.add_argument('--debug', help='prints checks on create and remove', action='store_true')
 
     # parser.print_help()
-    workloads = {"default": "Workloads/simple_workload.txt", "simple": "workloads/simple_workload.txt"}
+    workloads = {"default": "Workloads/test_workload.txt", "simple": "Workloads/simple_workload.txt"}
     out = parser.parse_args()
-    part = out.p
+    parts = out.p.split(',')
     workload = out.w
     debug = out.debug
     # print(part, workload, debug)
-    if part != None and (part < 0 or part > 5):
+    if parts != None and (set(parts) - set(['0','1','2','3','4'])):
         print('There are only parts 0 to 4 inclusive')
         exit()
     if workload not in ['default', 'simple']:
         print('There are only two valid workloads \'simple\' or \'default\'') 
         exit()
 
-    if part == None:
+    if parts == None:
         workload = 'default'
 
     workload = workloads[workload]
@@ -112,31 +132,26 @@ if __name__ == '__main__':
     # Run all tests
     # part == None runs all tests
 
-    if part == 0:
-        print('running part0')
+    if '0' in parts:
         part0(workload, debug)
 
     # TODO: Keep track of overall score
-    if part == None or part == 1:
-        print('running part1')
+    if parts == None or '1' in parts:
         try:
             part1(workload, debug)
         except NotImplementedError:
             print('part1 was not implemented')
-    if part == None or part == 2:
-        print('running part2')
+    if parts == None or '2' in parts:
         try:
             part2(workload, debug)
         except NotImplementedError:
             print('part2 was not implemented')
-    if part == None or part == 3:
-        print('running part3')
+    if parts == None or '3' in parts:
         try:
             part3(workload, debug)
         except NotImplementedError:
             print('part3 was not implemented')
-    if part == None or part == 4:
-        print('running part4')
+    if parts == None or '4' in parts:
         try:
             part4(workload, debug)
         except NotImplementedError:

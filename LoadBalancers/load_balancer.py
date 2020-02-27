@@ -15,6 +15,7 @@ class LoadBalancer:
         s = self.shards.pop(shard_name, None)
         if s:
             self.shard_list.remove(shard_name)
+            self.num_shards -= 1
             return s.kvstore
         return None
 

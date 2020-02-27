@@ -1,10 +1,11 @@
 # Consistent Hashing
 What is load balancing? Load balancing is the act of distributing workloads in a way that is balanced across various resources. Consistent Hashing is a method for load balancing that utilizes a hash function to distribute workloads in a consistent manner. This lab will (hopefully) help you build intuition for why consistent hashing is used. 
 
-In this lab, you will be writing various load balancers to handle a workload consisting of a sequence of puts, shard additions, and shard removals. The workload will be based on the [twitter social graph](http://an.kaist.ac.kr/traces/WWW2010.html). A simpler, sample workload will also be provided for you to test things separately. Each load balancer you write will become increasingly more complex until you eventually implement Consistent Hashing. (TODO: a workload with words.) 
+In this lab, you will be writing various load balancers to handle a workload consisting of a sequence of puts, shard additions, and shard removals. The workload will be based on the [dblp collaboration network](https://snap.stanford.edu/data/com-DBLP.html). A simpler, sample workload will also be provided for you to test things separately. Each load balancer you write will become increasingly more complex until you eventually implement Consistent Hashing. (TODO: a workload with words.) 
 
 ## Prerequisites
 - python3 or rust, both will probably be supported at some point in time
+- To download the data, navigate to the Workloads folder, do `wget https://snap.stanford.edu/data/bigdata/communities/com-dblp.ungraph.txt.gz` and to unzip it, do `gunzip com-dblp.ungraph.txt.gz`. Then run `python3 generate_workload.py`.
 
 ## Framework
 To run the testing framework, you'll run something along the lines of `python3 test_framework.py`. This will run all four parts for you to implement and tell you the score you get for each part. There are 4 parts in this lab for you to implement. You can run `python3 test_framework.py -h` to get a list of options you can run this with. 
@@ -69,18 +70,34 @@ What happened when you add and remove shards? Each time you add or remove a shar
 
 ## Part 3: Hash the Server Name
 TODO: Write some buildup for this part
-Moving all the keys each time might not be necessary, especially for the case when the keys get assigned to the same location. Here, we will try to avoid redistributing keys unnecessarily. Implement `LoadBalancers/load_balancer_hash_shard_once.py`.
+Moving all the keys each time might not be necessary, especially for the case when the keys get assigned to the same location. Here, we will try to avoid redistributing keys unnecessarily. To do this, you'll want to divide up the key-space somehow. The way we suggest is hashing the server name, since in expectation hashes are roughly uniformly distributed. [TODO: Probably provide resources for why.] 
+
+The hash function we will be using will be python's hash function but with a mask so that hashes are in the range(0, 2^32). This has some implications Pay close attention to when the solution wraps around 0. 
+
+Implement `LoadBalancers/load_balancer_hash_shard_once.py`.
 
 How many keys moved when you added and removed shards? 
 
+**Hint**: You might want to look into the bisect library.
+
 ## Part 4: Consistent Hashing
 TODO: Write some buildup for this part
-Now we hash the server name multiple times. Implement `LoadBalancers/load_balancer_hash_shard_mult.py`.
+Now we hash the server name multiple times. We recommend going through the possible cases for hashing, since this is harder than the previous section. 
+
+Implement `LoadBalancers/load_balancer_hash_shard_mult.py`.
 
 ## Reflection questions
 1. What happens when you increase the number of times you hash the server name in the consistent hashing scheme? 
 2. What are some benefits/drawbacks when increasing the number of times that you hash the server name?
 3. How might you balance the workload on a distribution in which some keys were a lot more popular than other keys?
+
+## Notes
+ - It can be assumed that there will always be at least one shard in the system. 
+ - Python's hash(...) function by default uses a random seed, so you might want to set `export PYTHONHASHSEED=0
+` when debugging your code. To unset it, just do `unset PYTHONHASHSEED`.
+ - We recommend using the `hash_fn` provided instead of python's `hash` function because that's a little unbounded. 
+ - Feel free to use any standard python3 library
+ - If you're interested in how to load balance according to the distribution of work, consider looking up Slicer or Elastic Load Balancer.
 
 ## Acknowledgements 
 The sections are based on this [video](https://cs.brown.edu/video/392/?quality=hires) by Doug Woos. This was a project for CSE599c: Data Center Systems offered in Winter 2020. 

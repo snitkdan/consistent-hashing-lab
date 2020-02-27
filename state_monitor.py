@@ -13,7 +13,6 @@ class StateMonitor:
         self.key_tracking[key] = self.key_tracking.get(key, 0) + 1
 
     def check_valid(self, shards, debug=False):
-        errors = []
         # process shards
         tracking = {}
         seen = set()
@@ -21,10 +20,13 @@ class StateMonitor:
             kv = shards[shard].kvstore
             for key in kv:
                 if key in tracking:
-                    errors.append("Found key '{}' in {} when already in {}".format(key, shard, tracking[key]))
+                    self.failed = True
+                    raise errors.KeyPresentInMultipleShardsError("Found key '{}' in {} when already in {}".format(key, shard, tracking[key]))
                 tracking[key] = shard
                 if kv[key] != self.key_tracking[key]:
-                    errors.append("The count was lost when moving key '{}'".format(key))
+                    self.failed = True
+                    print(self.key_tracking[key], kv[key])
+                    raise errors.ValueLostInTransitionError("The count was lost when moving key '{}'".format(key))
                 seen.add(key)
         if self.previous is not None:
             moved = 0
@@ -37,18 +39,9 @@ class StateMonitor:
         self.previous = tracking
         
         diff = set(self.key_tracking.keys()) - seen
-        for key in diff:
-            errors.append("key '{}' not found on any shard".format(key))
-
-        if errors:
-            print("FAIL")
+        if diff:
             self.failed = True
-            for e in errors:
-                if (debug): print(e)
-        else:
-            # print("PASS")
-            pass
-        return errors if errors else None
+            raise errors.KeyLostInTransitionError("keys {} not found on any shard".format(diff))
 
     def get_stats(self, shards, debug=False):
         minimum = float('inf')
@@ -67,14 +60,13 @@ class StateMonitor:
             if curr > maximum:
                 maximum = curr
             nums.append(curr)
-            print("{} has {} keys".format(shard, curr))
+            if (debug): print("{} has {} keys".format(shard, curr))
 
         total_moved = 0
         for key in self.moveCounter:
             if (debug): print('moved \'{}\' {} times'.format(key, self.moveCounter[key]))
             total_moved += self.moveCounter[key]
-            print('nani')
-        print("moved {} keys a total of {} times".format(len(self.moveCounter), total_moved))
+        print("moved {} keys out of {} keys a total of {} times".format(len(self.moveCounter), len(self.key_tracking), total_moved))
 
         mean = total / len(shards)
         variance = sum((i - mean) ** 2 for i in nums) / len(nums)
