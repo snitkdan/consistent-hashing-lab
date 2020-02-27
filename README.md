@@ -86,6 +86,8 @@ Now we hash the server name multiple times. We recommend going through the possi
 
 Implement `LoadBalancers/load_balancer_hash_shard_mult.py`.
 
+**Hint**: Try to simplify the problem into dealing with specific slices. 
+
 ## Reflection questions
 1. What happens when you increase the number of times you hash the server name in the consistent hashing scheme? 
 2. What are some benefits/drawbacks when increasing the number of times that you hash the server name?
@@ -93,8 +95,7 @@ Implement `LoadBalancers/load_balancer_hash_shard_mult.py`.
 
 ## Notes
  - It can be assumed that there will always be at least one shard in the system. 
- - Python's hash(...) function by default uses a random seed, so you might want to set `export PYTHONHASHSEED=0
-` when debugging your code. To unset it, just do `unset PYTHONHASHSEED`.
+ - Python's hash(...) function by default uses a random seed, so you might want to set `export PYTHONHASHSEED=0` when debugging your code. To unset it, just do `unset PYTHONHASHSEED`.
  - We recommend using the `hash_fn` provided instead of python's `hash` function because that's a little unbounded. 
  - Feel free to use any standard python3 library
  - If you're interested in how to load balance according to the distribution of work, consider looking up Slicer or Elastic Load Balancer.

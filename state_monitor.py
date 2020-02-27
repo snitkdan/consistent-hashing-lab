@@ -8,9 +8,12 @@ class StateMonitor:
         self.failed = False
         self.moveCounter = {} 
         # TODO: History of keys movements?
+        self.key_history = {}
 
     def put(self, key):
         self.key_tracking[key] = self.key_tracking.get(key, 0) + 1
+        if key not in self.key_history:
+            self.key_history[key] = []
 
     def check_valid(self, shards, debug=False):
         # process shards
@@ -21,17 +24,22 @@ class StateMonitor:
             for key in kv:
                 if key in tracking:
                     self.failed = True
-                    raise errors.KeyPresentInMultipleShardsError("Found key '{}' in {} when already in {}".format(key, shard, tracking[key]))
+                    self.key_history[key].append((self.previous[key], self.key_tracking[key]))
+                    raise errors.KeyPresentInMultipleShardsError("Found key '{}' in {} when already in {}, expecting count {}\nhistory: {}".format(key, shard, tracking[key], self.key_tracking[key], self.key_history[key]))
                 tracking[key] = shard
+        for shard in shards:
+            kv = shards[shard].kvstore
+            for key in kv:
                 if kv[key] != self.key_tracking[key]:
                     self.failed = True
-                    print(self.key_tracking[key], kv[key])
-                    raise errors.ValueLostInTransitionError("The count was lost when moving key '{}'".format(key))
+                    self.key_history[key].append((self.previous[key], self.key_tracking[key]))
+                    raise errors.ValueLostInTransitionError("The count was lost when moving key '{}'. Expected count {}, got count {}.\nhistory: {}".format(key, self.key_tracking[key], kv[key], self.key_history[key]))
                 seen.add(key)
         if self.previous is not None:
             moved = 0
             for key in self.previous:
                 if key in tracking and tracking[key] != self.previous[key]:
+                    self.key_history[key].append((self.previous[key], self.key_tracking[key]))
                     self.moveCounter[key] = self.moveCounter.get(key, 0) + 1
                     moved += 1
             added = len(tracking) - len(self.previous)

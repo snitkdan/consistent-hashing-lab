@@ -23,7 +23,7 @@ def run_test(load_balancer, workload, debug):
                 check_valid(sm, load_balancer.shards, debug)
             except Error as e:
                 print(e, 'in create {}'.format(create_count))
-                break
+                return None, sm.failed
             create_count += 1
         elif command == 'remove':
             try:
@@ -32,7 +32,8 @@ def run_test(load_balancer, workload, debug):
                 check_valid(sm, load_balancer.shards, debug)
             except Error as e:
                 print(e, 'in create {}'.format(create_count))
-                break
+                return None, sm.failed
+                
             remove_count += 1
         elif command == 'put':
             # try:
@@ -49,6 +50,7 @@ def run_test(load_balancer, workload, debug):
         check_valid(sm, load_balancer.shards, debug)
     except Error as e:
         print(e, 'by the end')
+        return None, sm.failed
     stats = sm.get_stats(load_balancer.shards, debug)
     return stats, sm.failed
 
@@ -92,11 +94,10 @@ def part4(workload, debug, max_score=20):
     return score
 
 def eval_results(stats, fail, max_score, part, debug):
-    if fail:
+    if fail or stats is None:
         return 0
     score = max_score
 
-    print(stats)
     # TODO: Probably case depending on how well each performs, I might calculate some bounds later
     if score < 0:
         score = 0
@@ -113,7 +114,7 @@ if __name__ == '__main__':
     # parser.print_help()
     workloads = {"default": "Workloads/test_workload.txt", "simple": "Workloads/simple_workload.txt"}
     out = parser.parse_args()
-    parts = out.p.split(',')
+    parts = out.p.split(',') if out.p else None
     workload = out.w
     debug = out.debug
     # print(part, workload, debug)
@@ -128,33 +129,43 @@ if __name__ == '__main__':
         workload = 'default'
 
     workload = workloads[workload]
+    total = 0
+    current = 0
 
     # Run all tests
     # part == None runs all tests
 
-    if '0' in parts:
+    if parts != None and '0' in parts:
         part0(workload, debug)
 
     # TODO: Keep track of overall score
     if parts == None or '1' in parts:
         try:
-            part1(workload, debug)
+            total += 5
+            current += part1(workload, debug, 5)
         except NotImplementedError:
             print('part1 was not implemented')
+
     if parts == None or '2' in parts:
         try:
-            part2(workload, debug)
+            total += 10
+            current += part2(workload, debug, 10)
         except NotImplementedError:
             print('part2 was not implemented')
+
     if parts == None or '3' in parts:
         try:
-            part3(workload, debug)
+            total += 15
+            current += part3(workload, debug, 15)
         except NotImplementedError:
             print('part3 was not implemented')
+
     if parts == None or '4' in parts:
         try:
-            part4(workload, debug)
+            total += 20
+            current += part4(workload, debug, 20)
         except NotImplementedError:
             print('part4 was not implemented')
 
-    exit()
+    print('---------------------------------------')
+    print('total score: {}/{} ({})'.format(current, total, str(round(current/total * 100, 2))))
