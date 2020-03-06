@@ -7,8 +7,8 @@ class StateMonitor:
         self.key_tracking = {}
         self.failed = False
         self.moveCounter = {} 
-        # TODO: History of keys movements?
         self.key_history = {}
+        self.num_shards = 0
 
     def put(self, key):
         self.key_tracking[key] = self.key_tracking.get(key, 0) + 1
@@ -61,6 +61,7 @@ class StateMonitor:
                 for shard in shards:
                     print(shard, shards[shard].kvstore)
             raise errors.KeyLostInTransitionError("keys {} not found on any shard".format(diff))
+        self.num_shards = len(shards)
 
     def get_stats(self, shards, debug=False):
         minimum = float('inf')
@@ -90,5 +91,11 @@ class StateMonitor:
         mean = total / len(shards)
         variance = sum((i - mean) ** 2 for i in nums) / len(nums)
         print("minimum: {} \nmaximum: {} \nmean: {} \nvariance: {}".format(minimum, maximum, mean, variance))
-        return {"minimum": minimum, "maximum": maximum, "mean": mean, "variance": variance}
-
+        return {"num_keys": total, 
+                "key_movement": total_moved, 
+                "minimum": minimum, 
+                "maximum": maximum, 
+                "mean": mean, 
+                "variance": variance, 
+                "num_shards": self.num_shards} 
+                

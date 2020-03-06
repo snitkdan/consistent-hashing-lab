@@ -87,48 +87,79 @@ def run_test(load_balancer, workload, debug):
 def check_valid(sm, shards, debug):
     sm.check_valid(shards, debug)
 
-def part0(workload, debug, max_score=0):
+def part0(workload, debug, stats, max_score=0):
     # load_balancer = UselessLoadBalancer()
     print('------------------------- testing part 0 -----------------------------------')
     load_balancer = BrokenLoadBalancer()
-    stats, fail = run_test(load_balancer, workload, debug)
+    s, fail = run_test(load_balancer, workload, debug)
+    stats[0] = s
     score = eval_results(stats, fail, max_score, 0, debug)
+    print("score: {}/{}".format(score, max_score))
     return score
 
-def part1(workload, debug, max_score=5):
+def part1(workload, debug, stats, max_score=5):
     print('------------------------- testing part 1 -----------------------------------')
     load_balancer = SimpleLoadBalancer()
-    stats, fail = run_test(load_balancer, workload, debug)
+    s, fail = run_test(load_balancer, workload, debug)
+    stats[1] = s
     score = eval_results(stats, fail, max_score, 1, debug)
+    print("score: {}/{}".format(score, max_score))
     return score
 
-def part2(workload, debug, max_score=10):
+def part2(workload, debug, stats, max_score=10):
     print('------------------------- testing part 2 -----------------------------------')
     load_balancer = HashKeyLoadBalancer()
-    stats, fail = run_test(load_balancer, workload, debug)
+    s, fail = run_test(load_balancer, workload, debug)
+    stats[2] = s
     score = eval_results(stats, fail, max_score, 2, debug)
+    print("score: {}/{}".format(score, max_score))
     return score
 
-def part3(workload, debug, max_score=15):
+def part3(workload, debug, stats, max_score=15):
     print('------------------------- testing part 3 -----------------------------------')
     load_balancer = HashShardLoadBalancer()
-    stats, fail = run_test(load_balancer, workload, debug)
+    s, fail = run_test(load_balancer, workload, debug)
+    stats[3] = s
     score = eval_results(stats, fail, max_score, 3, debug)
+    print("score: {}/{}".format(score, max_score))
     return score
 
-def part4(workload, debug, max_score=20):
+def part4(workload, debug, stats, max_score=20):
     print('------------------------- testing part 4 -----------------------------------')
     load_balancer = ConsistentHashingLoadBalancer()
-    stats, fail = run_test(load_balancer, workload, debug)
+    s, fail = run_test(load_balancer, workload, debug)
+    stats[4] = s
     score = eval_results(stats, fail, max_score, 4, debug)
+    print("score: {}/{}".format(score, max_score))
     return score
 
 def eval_results(stats, fail, max_score, part, debug):
-    if fail or stats is None:
+    if fail:
         return 0
     score = max_score
 
     # TODO: Probably case depending on how well each performs, I might calculate some bounds later
+    if part == 2:
+        mean = stats[part]['mean']
+        print(stats)
+    elif part == 3:
+        if 2 in stats:
+            key_move_2 = stats[2]['key_movement']
+            key_move_3 = stats[3]['key_movement']
+            if key_move_2 < key_move_3:
+                score *= 0.5
+    elif part == 4:
+        if 2 in stats:
+            key_move_2 = stats[2]['key_movement']
+            key_move_3 = stats[3]['key_movement']
+            if key_move_2 < key_move_3:
+                score *= 0.5
+        if 3 in stats:
+            variance_3 = stats[3]['variance']
+            variance_4 = stats[4]['variance']
+            if variance_3 < variance_4:
+                score *= 0.5
+
     if score < 0:
         score = 0
     return score
@@ -148,14 +179,16 @@ if __name__ == '__main__':
     workload = out.w
     debug = out.debug
     # print(part, workload, debug)
+
     if parts != None and (set(parts) - set(['0','1','2','3','4'])):
         print('There are only parts 0 to 4 inclusive')
         exit()
+
     if workload not in ['default', 'simple']:
         print('There are only two valid workloads \'simple\' or \'default\'') 
         exit()
 
-    if parts == None:
+    if parts == None and workload != 'simple':
         workload = 'default'
 
     workload = workloads[workload]
@@ -165,35 +198,37 @@ if __name__ == '__main__':
     # Run all tests
     # part == None runs all tests
 
+    stats = {}
+
     if parts != None and '0' in parts:
-        part0(workload, debug)
+        part0(workload, debug, stats)
 
     # TODO: Keep track of overall score
     if parts == None or '1' in parts:
         try:
             total += 5
-            current += part1(workload, debug, 5)
+            current += part1(workload, debug, stats, 5)
         except NotImplementedError:
             print('part1 was not implemented')
 
     if parts == None or '2' in parts:
         try:
             total += 10
-            current += part2(workload, debug, 10)
+            current += part2(workload, debug, stats, 10)
         except NotImplementedError:
             print('part2 was not implemented')
 
     if parts == None or '3' in parts:
         try:
             total += 15
-            current += part3(workload, debug, 15)
+            current += part3(workload, debug, stats, 15)
         except NotImplementedError:
             print('part3 was not implemented')
 
     if parts == None or '4' in parts:
         try:
             total += 20
-            current += part4(workload, debug, 20)
+            current += part4(workload, debug, stats, 20)
         except NotImplementedError:
             print('part4 was not implemented')
 
