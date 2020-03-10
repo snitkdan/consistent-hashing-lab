@@ -28,7 +28,7 @@ There are many other applications and there are many places in which it shows up
 In this lab, you will be implementing basic load balancers for a sharded key-value store, mapping keys to shards and keys to the number of times that the key has appeared within the workload. Working through the workload, shards will be added and deleted so you'll have to balance the keys in a consistent manner so that you can update them again later. 
 
 ### Realism
-Is this a realistic problem setup (or is everything just a simulation)? Oftentimes, servers need to be shut down for repairs or updates and then brought back up, so the work handled by/data residing in those servers need to be redirected to servers that will be alive during the update. Or maybe new servers will be introduced to help further balance the load. Servers may hold one or more shards at a time, but in our simple example, we'll only work with one shard at a time. 
+Is this a realistic problem setup (or is everything just a simulation)? Oftentimes, servers need to be shut down for repairs or updates and then brought back up, so the work handled by/data residing in those servers need to be redirected to servers that will be alive during the update. Or maybe new servers will be introduced to help further balance the load. Servers may hold one or more shards at a time, but in our simple example, we'll only work with one shard at a time. In this lab, you are acting as the central manager for the shards, so you can decide what keys belong with which shard and move them around. In reality, clients sending requests to the servers would also need to be able to figure out who to send their information to. 
 
 # Framework
 ## Prerequisites
@@ -54,32 +54,36 @@ All load balancers are a subclass of LoadBalancer and must implement the followi
 - `remove_shard(shard_name)`: Remove a shard from the system and rebalance accordingly.
 - `put(key)`: Assigns a specific key to a shard based on some scheme. 
 
-**Note**: `add_shard` and `remove_shard` should first call the parent `add_shard` and `remove_shard` functions. You may want to look at LoadBalancer's `add_shard`, `remove_shard`, and the data it keeps track of. 
+**Note**: `add_shard` and `remove_shard` should first call the parent `add_shard` and `remove_shard` functions. The parent `remove_shard` function returns the keys that the shard held, which you will need to redistribute. You may want to look at LoadBalancer's `add_shard`, `remove_shard`, and the data it keeps track of. 
 
-## Part 0: How do I put something in a shard?
-You can't load balance if you don't have a load to balance. `LoadBalancers/load_balancer_useless.py` shows how to put things in shards within the framework. This is a useless load balancer because all the work is distributed to the first node. If this server dies, then all the information is lost unless someone backed it up (look up State Machine Replication if interested). Or if there's a lot of traffic, then the latency and throughput might not be so great. 
+## Part 0: What if I just put it in one place?
+You don't need to load balance if everything's in one place! `LoadBalancers/load_balancer_useless.py` shows how to put things in shards within the framework. This is a not-so-great load balancer because all the work is distributed to the first node. If the server containing this shard dies, then all the information is lost unless someone backed it up (look up State Machine Replication/CSE 452 if interested). Or if there's a lot of traffic, then the latency and throughput might not be so great. This is already implemented for you, so just check it out to see how it works.
 
 ## Part 1: Simple Load Balancer
-A naive way to load balance would be to assign everything based on the first character of the key and modding by the number of shards. Implement `LoadBalancers/load_balancer_simple.py`. 
+We'll start off simple. We'll take something about the key and balance according to that. A naive way to load balance would be to assign everything based on the first character of the key. If we do this, do we have to do anything else to make sure that the key can be assigned to one of the servers? 
 
-What did the distribution of keys look like? TODO: Talk about variance
+Implement `LoadBalancers/load_balancer_simple.py`. 
+
+**Q**: What does the distribution look like? What might be a problem with this type of load balancing scheme?
 
 ## Part 2: Hash the key
-If you did the last part, hopefully you saw that there was an uneven distribution of keys. We will fix this by introducing hashes into the mix. (TODO: Talk about hashing.) This time, we will hash the key and then mod by the number of shards. Implement `LoadBalancers/load_balancer_hash_key.py`.
+We'll fix some of the problems we saw in the previous part. We will fix this by introducing hashes into the mix. Hash functions take some data and transform it in a pseudorandom manner. There are some bounds and guarantees that come with hashing, but we'll leave that to an algorithms or statistics course. This time, we will hash the key. Hashing will produce a generally uniform distribution of load, but there are some problems with it.
 
-What happened when you add and remove shards? Each time you add or remove a shard, how many keys do you need to move?
+Implement `LoadBalancers/load_balancer_hash_key.py`.
+
+**Q**: What happened to the keys when you add or remove shards? What might be a problem with this load balancing scheme?
 
 ## Part 3: Hash the Server Name
-TODO: Write some buildup for this part
-Moving all the keys each time might not be necessary, especially for the case when the keys get assigned to the same location. Here, we will try to avoid redistributing keys unnecessarily. To do this, you'll want to divide up the key-space somehow. The way we suggest is hashing the server name, since in expectation hashes are roughly uniformly distributed. [TODO: Probably provide resources for why.] 
+Redistribution comes at a cost, especially when the keys get assigned to the same location. Here, we will try to avoid redistributing keys unnecessarily by introducing the idea of a key-space. The key-space is the range of possible hash values [TODO]. To do this, you'll want to divide up the key-space somehow. 
 
-The hash function we will be using will be python's hash function but with a mask so that hashes are in the range(0, 2^32). This has some implications Pay close attention to when the solution wraps around 0. 
+The hash function we will be using will be python's hash function but with a mask so that hashes are in the range(0, 2^32), which we call `hash_fn`. 
 
 Implement `LoadBalancers/load_balancer_hash_shard_once.py`.
 
 How many keys moved when you added and removed shards? 
 
-**Hint**: You might want to look into the bisect library.
+**Hint 1**: Pay close attention to when the solution wraps around 0. 
+**Hint 2**: You might want to look into the bisect library.
 
 ## Part 4: Consistent Hashing
 TODO: Write some buildup for this part
