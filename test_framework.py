@@ -207,7 +207,6 @@ if __name__ == '__main__':
     if parts != None and '0' in parts:
         part0(workload, debug, stats)
 
-    # TODO: Keep track of overall score
     if parts == None or '1' in parts:
         try:
             total += 5

@@ -46,7 +46,7 @@ The workload will be based on the [dblp collaboration network](https://snap.stan
 ## Testing
 To run the testing framework, you'll run something along the lines of `python3 test_framework.py`. This will run all four parts for you to implement and tell you the score you get for each part. There are 4 parts in this lab for you to implement. You can run `python3 test_framework.py -h` to get a list of options you can use. Some parts may rely on the other parts for correctness, e.g. comparisons between the variance in parts 3 and 4 for correctness. 
 
-More detail about how the testing framework can be found in the Appendix.
+More detail about how the framework can be found in the Framework Information section.
 
 ## What you'll be implementing
 All load balancers are a subclass of LoadBalancer and must implement the following methods:
@@ -66,32 +66,40 @@ Implement `LoadBalancers/load_balancer_simple.py`.
 
 **Q**: What does the distribution look like? What might be a problem with this type of load balancing scheme?
 
-## Part 2: Hash the key
+## Part 2: The Key is Hashing
 We'll fix some of the problems we saw in the previous part. We will fix this by introducing hashes into the mix. Hash functions take some data and transform it in a pseudorandom manner. There are some bounds and guarantees that come with hashing, but we'll leave that to an algorithms or statistics course. This time, we will hash the key. Hashing will produce a generally uniform distribution of load, but there are some problems with it.
 
 Implement `LoadBalancers/load_balancer_hash_key.py`.
 
 **Q**: What happened to the keys when you add or remove shards? What might be a problem with this load balancing scheme?
 
-## Part 3: Hash the Server Name
-Redistribution comes at a cost, especially when the keys get assigned to the same location. Here, we will try to avoid redistributing keys unnecessarily by introducing the idea of a key-space. The key-space is the range of possible hash values [TODO]. To do this, you'll want to divide up the key-space somehow. 
+## Part 3: Lost in Key-Space
+Redistribution comes at a cost, especially when the keys get assigned to the same location. Now, we will try to avoid redistributing keys unnecessarily by introducing the idea of a key-space. The key-space is the range of possible hash values. In our case, we will let the key-space be [0, 2^32]. 
+
+We want to make sure that when we add or remove a server, we only redistribute keys that are affected by the change. To do this, you may want to divide up the key-space to regions controlled by individual servers based on some attribute of the servers somehow. What can you do to divide up the key-space so that, in expectation, the key-space is divided evenly among the servers?
 
 The hash function we will be using will be python's hash function but with a mask so that hashes are in the range(0, 2^32), which we call `hash_fn`. 
 
 Implement `LoadBalancers/load_balancer_hash_shard_once.py`.
 
-How many keys moved when you added and removed shards? 
+**Q**: What might be a problem with this load balancing scheme? 
 
 **Hint 1**: Pay close attention to when the solution wraps around 0. 
 **Hint 2**: You might want to look into the bisect library.
 
 ## Part 4: Consistent Hashing
-TODO: Write some buildup for this part
-Now we hash the server name multiple times. We recommend going through the possible cases for hashing, since this is harder than the previous section. 
+You're almost there. What if the way we partitioned the key-space made it so that the partitions were close together and the work was uneven? We'll remedy this by doing what we did for the previous scheme multiple times. We recommend going through the possible cases for dividing the key-space. 
 
 Implement `LoadBalancers/load_balancer_hash_shard_mult.py`.
 
 **Hint**: Try to simplify the problem into dealing with specific slices. 
+
+**Q**: If the number of times we hashed to create slices goes towards infinity, what would we expect to see in the distribution of keys among servers? What are some potential problems with this load balancing scheme?
+
+## Reflection questions
+* What are some benefits/drawbacks when increasing the number of times that you hash the server name?
+* How might you balance the workload on a distribution in which some keys were a lot more popular than other keys?
+* How might you balance the workload if it was changing over time question? That is, some keys are popular at some times and others at other times.  
 
 ## Grading
 Since the testing framework is provided to you, we will just download the files related to the load balancers you implement and run them on a clean copy of the testing framework. If you need to implement any helper functions for the labs, either implement them in the load balancer or inside utils.py. 
@@ -100,17 +108,14 @@ Generally:
 - All keys exist on some shard by the end of the workload. 
 - Keys get assigned consistently. 
 Then the tests only process test the following if the relevant parts are present:
-**Part 1**: Not much. 
-**Part 2**: Relatively uniform distribution of work. 
-**Part 3**: Lower number of key movements than Part 2. 
-**Part 4**: Lower number of key movements than Part 2, lower variance than Part 3. 
+**Part 1 (5pts)**: General cases.
+**Part 2 (10pts)**: General cases + Relatively uniform distribution of work\*.
+**Part 3 (15pts)**: General cases + Lower number of key movements than Part 2. 
+**Part 4 (20pts)**: General cases + Lower number of key movements than Part 2 + lower variance than Part 3. 
+**Reflection Questions (30pts total/3pts each)**: Please write your responses in WRITEUP.md, along with your name and UWNetID. Responses are expected to be between 1-3 sentences long. 
 Note that these trends may not hold for smaller workloads, since there is generally more variance in smaller workloads than larger ones; so we recommend only using smaller workloads to debug the correctness of your implementation. 
-
-## Reflection questions
-1. What happens when you increase the number of times you hash the server name in the consistent hashing scheme? 
-2. What are some benefits/drawbacks when increasing the number of times that you hash the server name?
-3. How might you balance the workload on a distribution in which some keys were a lot more popular than other keys?
-4. Workload changing over time question TODO
+If it doesn't pass the general case, it will be given 0 credit. If it fails additional checks, 50% will be marked off for each thing failed. 
+\* = we give a margin of a half of the mean.
 
 ## Notes
  - It can be assumed that there will always be at least one shard in the system. 
@@ -118,10 +123,14 @@ Note that these trends may not hold for smaller workloads, since there is genera
  - We recommend using the `hash_fn` provided instead of python's `hash` function because the number of bits returned by the Python hash function is not consistent. 
  - Feel free to use any standard python3 library.
  - If you're interested in how to load balance according to the distribution of work, consider looking up Slicer or Elastic Load Balancer.
- - There may be some weird issues with tqdm, you can replace it with 
+ - There may be some weird issues with getting stuck in `tqdm` in test_framework.py. If that happens, you can replace 
+ `for line in tqdm.tqdm(f, total=get_num_lines(workload)):`
+ with
+ `for line in f:`
+
  ...........................................................................
 
-# Appendix
+# Framework information
 
 ## Classes
 
@@ -130,11 +139,11 @@ Note that these trends may not hold for smaller workloads, since there is genera
 * `check_valid` checks for state violations:
   * Make sure that the same key wasn’t assigned to different shards
     * Validated by going through each key in a shard and mapping each key to a shard and making sure that each key is only assigned once
-  * Make sure that the information stored in the kv pair match what we expect them to be, counts of the number of times the key has been processed 
+  * Make sure that the information stored in the kv pair match what we expect them to be, i.e. counts of the number of times the key has been processed 
     * Validated by keeping an internal count as well to make sure that no information is lost
   * Make sure all keys actually exist on a shard
     * Validated by taking a set difference between known keys and seen keys during the check
-* Returns whether any errors occurred between checks
+* Throws an error if an error comes up and stops the test.
 * Calculates and outputs the statistics 
   * Statistics include mean, variance, maximum, minimum, and the number of times that keys have been moved
 
@@ -154,13 +163,26 @@ Note that these trends may not hold for smaller workloads, since there is genera
   * Not implemented, but ideally implemented in child classes
 * Child classes should call the super method to add/remove shards [already there for you]
 
+## Errors
+- KeyPresentInMultipleShardsError: At least one key is present in multiple shards
+- ValueLostInTransitionError: The value maintained by the key is not consistent after an add or remove 
+- KeyLostInTransitionError: The key is no longer present in any shard after an add or remove
+
+...........................................................................
+
+# Appendix
+
 ## Future work:
-- Implement everything in Rust and let people do it in either
-- 
+- Implement everything in Rust and let people do it in either.
+- Come up with more/better ways to test correctness or more tests in general.
+- Give this to students and test it out.
+- Finish the slides for the presentation
+- Linking of sections in the README.md
+
 
 ## Acknowledgements 
 The sections are based on this [video](https://cs.brown.edu/video/392/?quality=hires) by Doug Woos. 
 
-This was a project for CSE599c: Data Center Systems offered in Winter 2020. 
+This was a project for CSE599c: Data Center Systems, offered in Winter 2020. Hi, Tom. 
 
-Contact nowei@cs.washington.edu if there's any problems.
+Contact nowei\[at\]cs.washington.edu if there's any problems.
