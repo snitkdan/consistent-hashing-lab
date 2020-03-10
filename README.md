@@ -1,5 +1,5 @@
 # Consistent Hashing Lab Overview
-What is load balancing? Load balancing is the act of distributing workloads in a way that is balanced across various resources. Consistent Hashing is a method for load balancing that utilizes a hash function to distribute workloads in a consistent manner. This lab will (hopefully) help you build intuition for how consistent hashing works and why it is used. 
+What is load balancing? Load balancing is the act of distributing workloads in a way that is balanced across various resources. Consistent Hashing is a method for load balancing that utilizes a hash function to distribute workloads in a consistent manner and reduces the amount of key movement during configuration changes. This lab will (hopefully) help you build intuition for how consistent hashing works and why it is used. 
 
 In this lab, you will be writing various load balancers to handle a workload consisting of a sequence of puts, shard additions, and shard removals. 
 
@@ -35,16 +35,19 @@ Is this a realistic problem setup (or is everything just a simulation)? Oftentim
 - python3
 
 ## Data
-The workload will be based on the [dblp collaboration network](https://snap.stanford.edu/data/com-DBLP.html). A simpler, sample workload will also be provided for you to test things separately. Each load balancer you write will become increasingly more complex until you eventually implement Consistent Hashing. 
+The workload will be based on the [dblp collaboration network](https://snap.stanford.edu/data/com-DBLP.html). A simpler, sample workload will also be provided for you to test/debug things separately . Each load balancer you write will become increasingly more complex until you eventually implement Consistent Hashing. 
 
-### Getting the data
+### Generating the workload
 1. To download the data, navigate to the Workloads folder, run  
 `wget https://snap.stanford.edu/data/bigdata/communities/com-dblp.ungraph.txt.gz` 
 2. unzip it, run `gunzip com-dblp.ungraph.txt.gz`. 
 3. Then run `python3 generate_workload.py`.
 
+### The Workload
+There will be `put`, `create`, and `remove` commands in the workload and they will correspond to the `put`, `add_shard`, and `remove_shard` commands that will be described in more detail in a moment. 
+
 ## Testing
-To run the testing framework, you'll run something along the lines of `python3 test_framework.py`. This will run all four parts for you to implement and tell you the score you get for each part. There are 4 parts in this lab for you to implement. You can run `python3 test_framework.py -h` to get a list of options you can use. Some parts may rely on the other parts for correctness, e.g. comparisons between the variance in parts 3 and 4 for correctness. 
+To run the testing framework, you'll run something along the lines of `python3 test_framework.py`. This will run all four parts for you to implement and tell you the score you get for each part. There are 4 parts in this lab for you to implement. You can run `python3 test_framework.py -h` to get a list of options you can use. Some parts may rely on the other parts for correctness, e.g. comparisons between the variance in parts 3 and 4 for correctness. We suggest using `-w simple` when debugging and editing the `simple_workload.txt` file. 
 
 More detail about how the framework can be found in the Framework Information section.
 
@@ -136,7 +139,7 @@ If it doesn't pass the general case, it will be given 0 credit. If it fails addi
 
 ## Notes
  - It can be assumed that there will always be at least one shard in the system. 
- - Python's hash(...) function by default uses a random seed, so you might want to set `export PYTHONHASHSEED=0` when debugging your code. To unset it, just do `unset PYTHONHASHSEED`.
+ - Python's `hash(...)` function by default uses a random seed, so you might want to set `export PYTHONHASHSEED=0` when debugging your code. To unset it, just do `unset PYTHONHASHSEED`.
  - We recommend using the `hash_fn` provided instead of python's `hash` function because the number of bits returned by the Python hash function is not consistent. 
  - Feel free to use any standard python3 library.
  - If you're interested in how to load balance according to the distribution of work, consider looking up Slicer or Elastic Load Balancer.
@@ -145,7 +148,7 @@ If it doesn't pass the general case, it will be given 0 credit. If it fails addi
  with
  `for line in f:`
 
- ...........................................................................
+---
 
 # Framework information
 
@@ -154,7 +157,7 @@ If it doesn't pass the general case, it will be given 0 credit. If it fails addi
 ### StateMonitor - Has no direct access to shards, monitors state before and after removes and adds
 * Keeps track of states between checks, the number of times that keys have been updated, and the number of times that keys have been moved
 * `check_valid` checks for state violations:
-  * Make sure that the same key wasn’t assigned to different shards
+  * Make sure that the same key wasn't assigned to different shards
     * Validated by going through each key in a shard and mapping each key to a shard and making sure that each key is only assigned once
   * Make sure that the information stored in the kv pair match what we expect them to be, i.e. counts of the number of times the key has been processed 
     * Validated by keeping an internal count as well to make sure that no information is lost
@@ -181,11 +184,16 @@ If it doesn't pass the general case, it will be given 0 credit. If it fails addi
 * Child classes should call the super method to add/remove shards [already there for you]
 
 ## Errors
-- KeyPresentInMultipleShardsError: At least one key is present in multiple shards
-- ValueLostInTransitionError: The value maintained by the key is not consistent after an add or remove 
-- KeyLostInTransitionError: The key is no longer present in any shard after an add or remove
+- `KeyPresentInMultipleShardsError`: At least one key is present in multiple shards
+- `ValueLostInTransitionError`: The value maintained by the key is not consistent after an add or remove 
+- `KeyLostInTransitionError`: The key is no longer present in any shard after an add or remove
 
-...........................................................................
+## How the workload is generated
+Currently, I first append 90 `create [server name]` commands, and 9 `remove [server name]` commands, and use the data and make a `put [key]` from the first entry for every line. I'm using random.seed(0). Note that since the data is given in an increasing order of nodes, it didn't really make sense to put everything in that order, so I used random.shuffle() afterwards and then added 10 servers at the start so that puts weren't being put into empty servers. random.shuffle() shuffles 9 removes, 90 creates, and all the put commands. We have to make sure that the servers removed actually exist when we remove them, so we only remove from the first 10 servers that we added to the front for simplicity. 
+
+The low number of `create [server name]` and `remove [server name]` commands makes the somewhat expensive checks for checking create and remove operations a little bit better. We go through the file and see where they are located so that we can tell if this is a reasonable distribution of work. 
+
+---
 
 # Appendix
 
@@ -193,16 +201,28 @@ If it doesn't pass the general case, it will be given 0 credit. If it fails addi
 If the class is being geared towards CSE 3xx students, then the population will be mostly sophomores, juniors, and a few seniors who have finished CSE 351 and CSE 332.
 
 ## Scope of the project
-It was really centered around consistent hashing. 
+It was really centered around consistent hashing, so I think the parts build up to it relatively well.
 
 ## Do we think we met the outcomes we put forth?
 - Students should try out different hashing schemes and observe differences
+
 They will definitely try out different hashing schemes, but differences may be a little hard to recognize besides the statistics at the end, so it might be better if there was something that could help them see differences in what's happening as time goes on. A visualization of some sort would probably work best.
-- Give students intuition for why it’s useful/an important problem
-Probably not besides the motivation part. Students often don't know what matters until you tell them.  since even though it's hard for students to learn why something is important without telling them, 
+
+- Give students intuition for why it's useful/an important problem
+
+Probably not besides the motivation part. "Students often don't know what matters until you tell them." In my experience, students sometimes still have a hard time understanding why something matters even if you tell them why it matters, which I guess motivates the idea of explaining things in a lot of different ways. 
+
+## Is the project reasonable?
+Yeah, it seems reasonable. It took me around 6-8 hours to finish and I designed/implemented it; which might make it seem a bit long. But I was also tired and editing stuff to make debugging easier along the way, so it's a little hard to guage how long it'll take. I think it'll definitely be doable with a 5-day period for the target audience while accounting for other classes/homework for a typical student. 
+
+Each of the sections aren't asking for too much in terms of implementation. I don't think I explicitly mention what consistent hashing is, so maybe there is some room for improvement in terms of being clear. One could argue that if I tell them too much, it's sort of like hand-holding them through the assignment; or if I tell them too little, it makes the project underdefined. So I guess it's a little hard to judge, but if they look up consistent hashing there's a bunch of good resources. Also, it might be interesting to test out the assignment and see what people think of it in terms of whether it's overspecified or underspecified. 
+
+There may be too many short answer questions. I think 5 is a good number, but it's 10 right now because I have a hard time culling the herd. 
 
 ## What makes a good course project?
+I think a good course project is a course project that leaves the student with the feeling that they've learned something useful and has actually taught the student something useful. They may also feel a sense of pride and accomplishment for completing it, but the main goal is that they finish the assignment with a better understanding of how the topic works. Sometimes this means that they should struggle with it for a while and if they aren't able to finish it right away, feel like they are capable of finishing it. 
 
+Familiarizing them with the testing framework or telling them a specific way to do something should not be the goal of the project and we should aim to help them develop ideas of how to approach this type of problem. This might mean making the framework simpler/easier to use or leaving things somewhat ambiguous on purpose so that they can determine whether they actually know something or whether they're able to regurgitate something. 
 
 ## Future work
 - Implement everything in Rust and let people do it in either.
@@ -211,12 +231,15 @@ Probably not besides the motivation part. Students often don't know what matters
 - Finish the slides for the presentation. 
 - Linking of sections in the README.md.
 - Pictures might be nice.
+- Being more concise because currently it's seems like a massive wall of text.
+- A visualization tool.
 
 ## Course ideas
 ### Project ideas
 - Implement a small version of Kafka
   - Kafka is used for data processing in a lot of pipelines nowadays and I don't think the publisher/subscriber design patterns is talked about in any class.
   - Although this applies to pretty much anything open-sourced because they can sort of see how much work was put into it and get a better understanding of how to use it.
+    - They can even benchmark their implementation!
 - Quarter-long project that involves building something that simulates a datacenter-hosted application, including networking, queueing, distributing work, setting up APIs, stuff like that.
 
 ## Unrelated, but I want to see these things
