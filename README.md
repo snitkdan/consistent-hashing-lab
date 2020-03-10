@@ -13,7 +13,7 @@ Terminology is everything. It will make or break your understanding of papers, p
 * Throughput is how much stuff can be processed in a given amount of time.
 
 ## Motivation
-Why does this matter? Load balancing is important in distributed systems. When we talk about load balancing, we usually talk about balancing some load in terms of storage or computational workload. What if we didn't do any load balancing? Imagine if you have 30 server and your application only runs and serves on a single server. You'd have 29 idle machines that are just sitting there, which isn't great in terms of resource utilization. Then if the workload was larger than a single server could handle, the application may just flop. The latency and throughput would be miserable and you might lose customers or their confidence in you drops and they go with some competitor. A way to fix this would be distribute the work somehow, i.e. to shard or partition the work such that the workload isn't too great on any given server. 
+Why does this matter? Load balancing is important in distributed systems. When we talk about load balancing, we usually talk about balancing some load in terms of storage or computational workload. What if we didn't do any load balancing? Imagine if you have 30 server and your application only runs and serves on a single server. You'd have 29 idle machines that are just sitting there, which isn't great in terms of resource utilization. Then if the workload was larger than a single server could handle, the application may just flop. The latency and throughput would be miserable and you might lose customers or their confidence in you drops and they go with some competitor. A way to fix this would be to distribute the work somehow, i.e. to shard or partition the work such that the workload isn't too great on any given server. 
 
 A load is like a strain on the system, so load balancing is a way to balance this strain so that the system isn't overwhelmed. There's many types of loads we can balance, like memory, compute, or network load. In a memory-constrained environment, we might want to partition the data so that it's stored in different places. In a compute-constrained environment, we might want to distribute the jobs to servers evenly. In a network-constrained environment, we might want to balance according to the bandwidth available to a given server. 
 
@@ -64,14 +64,16 @@ We'll start off simple. We'll take something about the key and balance according
 
 Implement `LoadBalancers/load_balancer_simple.py`. 
 
-**Q**: What does the distribution look like? What might be a problem with this type of load balancing scheme?
+**Q1**: What does the distribution look like? 
+**Q2**: What might be a problem with this type of load balancing scheme?
 
 ## Part 2: The Key is Hashing
 We'll fix some of the problems we saw in the previous part. We will fix this by introducing hashes into the mix. Hash functions take some data and transform it in a pseudorandom manner. There are some bounds and guarantees that come with hashing, but we'll leave that to an algorithms or statistics course. This time, we will hash the key. Hashing will produce a generally uniform distribution of load, but there are some problems with it.
 
 Implement `LoadBalancers/load_balancer_hash_key.py`.
 
-**Q**: What happened to the keys when you add or remove shards? What might be a problem with this load balancing scheme?
+**Q3**: What happened to the keys when you add or remove shards? 
+**Q4**: What might be a problem with this load balancing scheme?
 
 ## Part 3: Lost in Key-Space
 Redistribution comes at a cost, especially when the keys get assigned to the same location. Now, we will try to avoid redistributing keys unnecessarily by introducing the idea of a key-space. The key-space is the range of possible hash values. In our case, we will let the key-space be [0, 2^32]. 
@@ -82,7 +84,7 @@ The hash function we will be using will be python's hash function but with a mas
 
 Implement `LoadBalancers/load_balancer_hash_shard_once.py`.
 
-**Q**: What might be a problem with this load balancing scheme? 
+**Q5**: What might be a problem with this load balancing scheme? 
 
 **Hint 1**: Pay close attention to when the solution wraps around 0. 
 **Hint 2**: You might want to look into the bisect library.
@@ -94,12 +96,13 @@ Implement `LoadBalancers/load_balancer_hash_shard_mult.py`.
 
 **Hint**: Try to simplify the problem into dealing with specific slices. 
 
-**Q**: If the number of times we hashed to create slices goes towards infinity, what would we expect to see in the distribution of keys among servers? What are some potential problems with this load balancing scheme?
+**Q6**: If the number of times we hashed to create slices goes towards infinity, what would we expect to see in the distribution of keys among servers? 
+**Q7**: What are some potential problems with this load balancing scheme?
 
 ## Reflection questions
-* What are some benefits/drawbacks when increasing the number of times that you hash the server name?
-* How might you balance the workload on a distribution in which some keys were a lot more popular than other keys?
-* How might you balance the workload if it was changing over time question? That is, some keys are popular at some times and others at other times.  
+**Q8**: What are some benefits/drawbacks when increasing the number of times that you hash the server name?
+**Q9**: How might you balance the workload on a distribution in which some keys were a lot more popular than other keys?
+**Q10**: How might you balance the workload if it was changing over time question? That is, some keys are popular at some times and others at other times.  
 
 ## Grading
 Since the testing framework is provided to you, we will just download the files related to the load balancers you implement and run them on a clean copy of the testing framework. If you need to implement any helper functions for the labs, either implement them in the load balancer or inside utils.py. 
@@ -107,12 +110,19 @@ What we're looking for:
 Generally: 
 - All keys exist on some shard by the end of the workload. 
 - Keys get assigned consistently. 
+
 Then the tests only process test the following if the relevant parts are present:
+
 **Part 1 (5pts)**: General cases.
+
 **Part 2 (10pts)**: General cases + Relatively uniform distribution of work\*.
+
 **Part 3 (15pts)**: General cases + Lower number of key movements than Part 2. 
+
 **Part 4 (20pts)**: General cases + Lower number of key movements than Part 2 + lower variance than Part 3. 
-**Reflection Questions (30pts total/3pts each)**: Please write your responses in WRITEUP.md, along with your name and UWNetID. Responses are expected to be between 1-3 sentences long. 
+
+**Short Response (30pts total/3pts each)**: Please write your responses in WRITEUP.md, along with your name and UWNetID. Responses are expected to be between 1-3 sentences long. 
+
 Note that these trends may not hold for smaller workloads, since there is generally more variance in smaller workloads than larger ones; so we recommend only using smaller workloads to debug the correctness of your implementation. 
 If it doesn't pass the general case, it will be given 0 credit. If it fails additional checks, 50% will be marked off for each thing failed. 
 \* = we give a margin of a half of the mean.
@@ -172,13 +182,52 @@ If it doesn't pass the general case, it will be given 0 credit. If it fails addi
 
 # Appendix
 
-## Future work:
+## Target audience for the course project 
+If the class is being geared towards CSE 3xx students, then the population will be mostly sophomores, juniors, and a few seniors who have finished CSE 351 and CSE 332.
+
+## Scope of the project
+It was really centered around consistent hashing. 
+
+## Do we think we met the outcomes we put forth?
+- Students should try out different hashing schemes and observe differences
+They will definitely try out different hashing schemes, but differences may be a little hard to recognize besides the statistics at the end, so it might be better if there was something that could help them see differences in what's happening as time goes on. A visualization of some sort would probably work best.
+- Give students intuition for why it’s useful/an important problem
+Probably not besides the motivation part. Students often don't know what matters until you tell them.  since even though it's hard for students to learn why something is important without telling them, 
+
+## What makes a good course project?
+
+
+## Future work
 - Implement everything in Rust and let people do it in either.
 - Come up with more/better ways to test correctness or more tests in general.
 - Give this to students and test it out.
-- Finish the slides for the presentation
-- Linking of sections in the README.md
+- Finish the slides for the presentation. 
+- Linking of sections in the README.md.
+- Pictures might be nice.
 
+## Course ideas
+### Project ideas
+- Implement a small version of Kafka
+  - Kafka is used for data processing in a lot of pipelines nowadays and I don't think the publisher/subscriber design patterns is talked about in any class.
+  - Although this applies to pretty much anything open-sourced because they can sort of see how much work was put into it and get a better understanding of how to use it.
+- Quarter-long project that involves building something that simulates a datacenter-hosted application, including networking, queueing, distributing work, setting up APIs, stuff like that.
+
+## Unrelated, but I want to see these things
+### Things that would be cool to talk about in a course
+- How hashing and different types of hashing are used in systems
+  - Hashing applications aren't talked about besides in the context of hash tables or hashmaps in CSE 332, so it might be interesting to see how it's used outside of just those things, like with consistent hashing.
+- Teach people how to use Docker/Kubernetes. I know that some course at UWB does that, but my friends told me that they didn't really learn how it worked by the end of it.
+- Dissecting technology stacks, so it's sort of about how things are put together, maintained, and upgraded. Maybe something about the lifecycle of software/hardware. 
+- How to create packages and stuff for people to use.
+- How to read papers and get something out of it. 
+
+### Courses I want to see
+- A course that is literally only about implementing open-source software and talking about how they work, with a final project that lets students choose something that they want to implement. 
+- A course just about implementing and applying algorithms to build something with a final project that lets students choose what they want to make. 
+- A course about using open-source frameworks where every week they try a new framework and finish a small assignment in that framework. Sort of like CSE 391, but with frameworks instead of Linux tools. 
+- A CS education course that lets people make educational projects based on some topic they're interested in. It kind of encroaches on the Education space, but CS education seems like it has a somewhat different focus than normal education courses.
+- A seminar focused on dealing with stress and anxiety in CSE, topics like gender imbalance, how to deal with imposter syndrome, how to tackle problems, and how to learn.
+- A seminar for professors to just talk about what they're interested in/their research and it's a different professor every week.
 
 ## Acknowledgements 
 The sections are based on this [video](https://cs.brown.edu/video/392/?quality=hires) by Doug Woos. 
