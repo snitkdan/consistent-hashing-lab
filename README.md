@@ -201,7 +201,7 @@ The low number of `create [server name]` and `remove [server name]` commands mak
 If the class is being geared towards CSE 3xx students, then the population will be mostly sophomores, juniors, and a few seniors who have finished CSE 351 and CSE 332.
 
 ## Scope of the project
-It was really centered around consistent hashing, so I think the parts build up to it relatively well.
+The project was centered around consistent hashing, so I think the parts build up to it relatively well. Each part built upon the last by at least a little bit. 
 
 ## Do we think we met the outcomes we put forth?
 - Students should try out different hashing schemes and observe differences
@@ -212,27 +212,45 @@ They will definitely try out different hashing schemes, but differences may be a
 
 Probably not besides the motivation part. "Students often don't know what matters until you tell them." In my experience, students sometimes still have a hard time understanding why something matters even if you tell them why it matters, which I guess motivates the idea of explaining things in a lot of different ways. 
 
-## Is the project reasonable?
-Yeah, it seems reasonable. It took me around 6-8 hours to finish and I designed/implemented it; which might make it seem a bit long. But I was also tired and editing stuff to make debugging easier along the way, so it's a little hard to guage how long it'll take. I think it'll definitely be doable with a 5-day period for the target audience while accounting for other classes/homework for a typical student. 
+## Is the assignment reasonable?
+Yeah, it seems reasonable. It took me around 4-8 hours to finish and I designed/implemented it; which might make it seem a bit long. But I was also tired and editing stuff to make debugging easier along the way, so it's a little hard to guage how long it'll take. I think it'll definitely be doable with a 5-day period for the target audience while accounting for other classes/homework for a typical student. 
 
-Each of the sections aren't asking for too much in terms of implementation. I don't think I explicitly mention what consistent hashing is, so maybe there is some room for improvement in terms of being clear. One could argue that if I tell them too much, it's sort of like hand-holding them through the assignment; or if I tell them too little, it makes the project underdefined. So I guess it's a little hard to judge, but if they look up consistent hashing there's a bunch of good resources. Also, it might be interesting to test out the assignment and see what people think of it in terms of whether it's overspecified or underspecified. 
+Each of the sections aren't asking for too much in terms of implementation. Most parts are a slight extension of the previous part, so it kind of holds their hand through the assignment; which is definitely more reasonable than just being like, "Do consistent hashing! Have fun!". I don't think I explicitly mention what consistent hashing is, so maybe there is some room for improvement in terms of being clear. 
+
+One could argue that if I tell them too much, it's sort of like hand-holding them through the assignment; or if I tell them too little, it makes the assignment underdefined. So I guess it's a little hard to judge, but if they look up consistent hashing there's a bunch of good resources. Also, it might be interesting to test out the assignment and see what people think of it in terms of whether it's overspecified or underspecified. 
 
 There may be too many short answer questions. I think 5 is a good number, but it's 10 right now because I have a hard time culling the herd. 
 
-## What makes a good course project?
-I think a good course project is a course project that leaves the student with the feeling that they've learned something useful and has actually taught the student something useful. They may also feel a sense of pride and accomplishment for completing it, but the main goal is that they finish the assignment with a better understanding of how the topic works. Sometimes this means that they should struggle with it for a while and if they aren't able to finish it right away, feel like they are capable of finishing it. 
+## What makes a good assignment?
+I think a good assignment is an assignment that leaves the student with the feeling that they've learned something useful and has actually taught the student something useful. They may also feel a sense of pride and accomplishment for completing it, but the main goal is that they finish the assignment with a better understanding of how the topic works. Sometimes this means that they should struggle with it for a while and if they aren't able to finish it right away, feel like they are capable of finishing it. 
 
-Familiarizing them with the testing framework or telling them a specific way to do something should not be the goal of the project and we should aim to help them develop ideas of how to approach this type of problem. This might mean making the framework simpler/easier to use or leaving things somewhat ambiguous on purpose so that they can determine whether they actually know something or whether they're able to regurgitate something. 
+Familiarizing them with the testing framework or telling them a specific way to do something should not be the goal of the assignment and we should aim to help them develop ideas of how to approach this type of problem. This might mean making the framework simpler/easier to use or leaving things somewhat ambiguous on purpose so that they can determine whether they actually know something or whether they're able to regurgitate something. 
+
+## Was this a good assignment?
+Meta-wise, it was an okay course project, but it would've been interesting to do research as well. I can't actually answer if this would make for a good assignment or not because I'd be somewhat biased. I think it is a reasonable assignment and it doesn't fall far from the scope of what people should be capable of after finishing CSE 351 and CSE 332. 
+
+## How was the grading determined?
+**Part 1**: Pretty much anything should pass.
+
+**Part 2**: Choosing half the mean as the error bound was somewhat arbitrary, but the reasoning is as follows: as the number of keys increased, since the hash should uniformly distribute the keys, the variance should go towards 0, which means that the deviations should get smaller and the probability that any shard holding shards exceeding a difference half the mean should be smaller as well. 
+
+**Part 3**: It just had to have less key movements than part 2, since that's sort of the point of using a key-space.
+
+**Part 4**: It should have lower variance than Part 3 because it uses the same hash function and it's the same workload, so it should achieve lower variance if the key-space was finer-grained. 
 
 ## Future work
 - Implement everything in Rust and let people do it in either.
 - Come up with more/better ways to test correctness or more tests in general.
 - Give this to students and test it out.
+- Make it easier to debug the assignment. 
 - Finish the slides for the presentation. 
 - Linking of sections in the README.md.
 - Pictures might be nice.
 - Being more concise because currently it's seems like a massive wall of text.
 - A visualization tool.
+
+## Conclusion
+It was the first time I made an educational project, so I think I'm okay with how it turned out. I accomplished what I set out to do, which was create an educational assignment about consistent hashing. Although I'm not sure I can evaluate the outcomes without actually having any outcomes, since no one's done it besides me. 
 
 ## Course ideas
 ### Project ideas
