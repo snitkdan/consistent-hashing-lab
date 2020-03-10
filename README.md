@@ -1,32 +1,41 @@
 # Consistent Hashing Lab Overview
-What is load balancing? Load balancing is the act of distributing workloads in a way that is balanced across various resources. Consistent Hashing is a method for load balancing that utilizes a hash function to distribute workloads in a consistent manner. This lab will (hopefully) help you build intuition for why consistent hashing is used. 
+What is load balancing? Load balancing is the act of distributing workloads in a way that is balanced across various resources. Consistent Hashing is a method for load balancing that utilizes a hash function to distribute workloads in a consistent manner. This lab will (hopefully) help you build intuition for how consistent hashing works and why it is used. 
 
-In this lab, you will be writing various load balancers to handle a workload consisting of a sequence of puts, shard additions, and shard removals. The workload will be based on the [dblp collaboration network](https://snap.stanford.edu/data/com-DBLP.html). A simpler, sample workload will also be provided for you to test things separately. Each load balancer you write will become increasingly more complex until you eventually implement Consistent Hashing. 
-
-## Motivation
-Why does this matter? (TODO: actually add stuff here)
-
-Some applications include: 
-
-Why not just hash everything and be done with it?
-
-## Problem setup
-Something something KVStore or something. 
-
-### Realism
-Is this a realistic problem setup (or is everything just a simulation)? Oftentimes, servers need to be shut down for updates and then brought back up, so the work handled by those servers need to be redirected to servers that will be alive during the update. (TODO: Write some more stuff here, probably.) Why add, why remove shards?
+In this lab, you will be writing various load balancers to handle a workload consisting of a sequence of puts, shard additions, and shard removals. 
 
 ## Some terminology
 Terminology is everything. It will make or break your understanding of papers, presentations, or conversations, so we will try to define some terms you may not have heard of before. We'll also define some other terminology that won't be used in the lab, but will be good to know if you continue to take systems-related courses. 
 * Servers process requests from clients. 
 * Nodes are communication endpoints, e.g. if you have a client and a server, you have two nodes. 
 * Sharding is a way to partition data into shards, which are faster to utilize and easier to distribute. 
+* Bandwidth is how much data can be sent from one point to another in a given amount of time.
 * Latency is how long it takes to do something after you requested it to be done.
 * Throughput is how much stuff can be processed in a given amount of time.
+
+## Motivation
+Why does this matter? Load balancing is important in distributed systems. When we talk about load balancing, we usually talk about balancing some load in terms of storage or computational workload. What if we didn't do any load balancing? Imagine if you have 30 server and your application only runs and serves on a single server. You'd have 29 idle machines that are just sitting there, which isn't great in terms of resource utilization. Then if the workload was larger than a single server could handle, the application may just flop. The latency and throughput would be miserable and you might lose customers or their confidence in you drops and they go with some competitor. A way to fix this would be distribute the work somehow, i.e. to shard or partition the work such that the workload isn't too great on any given server. 
+
+A load is like a strain on the system, so load balancing is a way to balance this strain so that the system isn't overwhelmed. There's many types of loads we can balance, like memory, compute, or network load. In a memory-constrained environment, we might want to partition the data so that it's stored in different places. In a compute-constrained environment, we might want to distribute the jobs to servers evenly. In a network-constrained environment, we might want to balance according to the bandwidth available to a given server. 
+
+Some applications include: 
+- Splitting work to efficiently analyze giant social graphs on Facebook or Twitter
+- Redirecting work based on server outages
+- Deciding which thread should run next in a multi-threaded program
+
+There are many other applications and there are many places in which it shows up, so it's good to have some knowledge about some basic load balancing schemes. In our load balancing schemes, we want to distribute the workload as even as possible. One way we might want to do this is through hashing, which has probabilistic guarantees of uniformity; so why don't we just hash all the work and assign it to some corresponding server? The number of servers we have may change, so the assignment of work has to change whenever the numbers of servers changes, which may incur some cost in terms of maintaining the state stored related to the data. 
+
+## Problem setup
+In this lab, you will be implementing basic load balancers for a sharded key-value store, mapping keys to shards and keys to the number of times that the key has appeared within the workload. Working through the workload, shards will be added and deleted so you'll have to balance the keys in a consistent manner so that you can update them again later. 
+
+### Realism
+Is this a realistic problem setup (or is everything just a simulation)? Oftentimes, servers need to be shut down for repairs or updates and then brought back up, so the work handled by/data residing in those servers need to be redirected to servers that will be alive during the update. Or maybe new servers will be introduced to help further balance the load. Servers may hold one or more shards at a time, but in our simple example, we'll only work with one shard at a time. 
 
 # Framework
 ## Prerequisites
 - python3
+
+## Data
+The workload will be based on the [dblp collaboration network](https://snap.stanford.edu/data/com-DBLP.html). A simpler, sample workload will also be provided for you to test things separately. Each load balancer you write will become increasingly more complex until you eventually implement Consistent Hashing. 
 
 ### Getting the data
 1. To download the data, navigate to the Workloads folder, run  
@@ -87,15 +96,17 @@ Generally:
 - All keys exist on some shard by the end of the workload. 
 - Keys get assigned consistently. 
 Then the tests only process test the following if the relevant parts are present:
-Part 1: Not much. 
-Part 2: Relatively uniform distribution of work. 
-Part 3: Lower number of key movements than Part 2. 
-Part 4: Lower number of key movements than Part 2, lower variance than Part 3. 
+**Part 1**: Not much. 
+**Part 2**: Relatively uniform distribution of work. 
+**Part 3**: Lower number of key movements than Part 2. 
+**Part 4**: Lower number of key movements than Part 2, lower variance than Part 3. 
+Note that these trends may not hold for smaller workloads, since there is generally more variance in smaller workloads than larger ones; so we recommend only using smaller workloads to debug the correctness of your implementation. 
 
 ## Reflection questions
 1. What happens when you increase the number of times you hash the server name in the consistent hashing scheme? 
 2. What are some benefits/drawbacks when increasing the number of times that you hash the server name?
 3. How might you balance the workload on a distribution in which some keys were a lot more popular than other keys?
+4. Workload changing over time question TODO
 
 ## Notes
  - It can be assumed that there will always be at least one shard in the system. 

@@ -141,7 +141,11 @@ def eval_results(stats, fail, max_score, part, debug):
     # TODO: Probably case depending on how well each performs, I might calculate some bounds later
     if part == 2:
         mean = stats[part]['mean']
-        print(stats)
+        minimum = stats[part]['minimum']
+        maximum = stats[part]['maximum']
+        half = mean / 2
+        if minimum < half or maximum > mean + half:
+            score *= 0.5
     elif part == 3:
         if 2 in stats:
             key_move_2 = stats[2]['key_movement']
