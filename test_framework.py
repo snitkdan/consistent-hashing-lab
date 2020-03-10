@@ -3,13 +3,14 @@ from errors import Error
 import argparse
 from LoadBalancers.load_balancer_broken import BrokenLoadBalancer
 from LoadBalancers.load_balancer_useless import UselessLoadBalancer
-from LoadBalancersSoln.load_balancer_simple import SimpleLoadBalancer
-from LoadBalancersSoln.load_balancer_hash_key import HashKeyLoadBalancer
-from LoadBalancersSoln.load_balancer_hash_shard_once import HashShardLoadBalancer
-from LoadBalancersSoln.load_balancer_hash_shard_mult import ConsistentHashingLoadBalancer
+from LoadBalancers.load_balancer_simple import SimpleLoadBalancer
+from LoadBalancers.load_balancer_hash_key import HashKeyLoadBalancer
+from LoadBalancers.load_balancer_hash_shard_once import HashShardLoadBalancer
+from LoadBalancers.load_balancer_hash_shard_mult import ConsistentHashingLoadBalancer
 
 import inspect
 import tqdm
+
 # store builtin print
 old_print = print
 def new_print(*args, **kwargs):
@@ -21,6 +22,7 @@ def new_print(*args, **kwargs):
 # globaly replace print with new_print
 inspect.builtins.print = new_print
 
+# Used for tqdm
 import mmap
 def get_num_lines(file_path):
     fp = open(file_path, "r+")
@@ -30,14 +32,21 @@ def get_num_lines(file_path):
         lines += 1
     return lines
 
+# Runs the implemented load_balancer against the workload
 def run_test(load_balancer, workload, debug):
     sm = StateMonitor()
-    create_count = 0
-    remove_count = 0
+    create_count = 0 # Keeps track of how many creates went through
+    remove_count = 0 # Keeps track of how many removes went through
     with open(workload) as f:
+        # returns (None, sm.failed) if there are any errors
+        # otherwise runs through the workload
         for line in tqdm.tqdm(f, total=get_num_lines(workload)):
+            
+            # Parse command
             command, arg = line.split()
+
             if command == 'create':
+
                 if debug: print('\n{} {}'.format(command, arg))
 
                 try:
@@ -55,7 +64,9 @@ def run_test(load_balancer, workload, debug):
                     return None, sm.failed
 
                 create_count += 1
+
             elif command == 'remove':
+
                 if debug: print('\n{} {}'.format(command, arg))
 
                 try:
@@ -73,22 +84,27 @@ def run_test(load_balancer, workload, debug):
                     return None, sm.failed
 
                 remove_count += 1
+
             elif command == 'put':
+
                 load_balancer.put(arg)
                 sm.put(arg)
+
+        # Final check 
         try:
             check_valid(sm, load_balancer.shards, debug)
         except Error as e:
             print('\nat the end\n{}'.format(e))
             return None, sm.failed
+
         stats = sm.get_stats(load_balancer.shards, debug)
         return stats, sm.failed
 
+"""Checks validity using StateManager sm"""
 def check_valid(sm, shards, debug):
     sm.check_valid(shards, debug)
 
 def part0(workload, debug, stats, max_score=0):
-    # load_balancer = UselessLoadBalancer()
     print('------------------------- testing part 0 -----------------------------------')
     load_balancer = BrokenLoadBalancer()
     s, fail = run_test(load_balancer, workload, debug)
@@ -138,8 +154,8 @@ def eval_results(stats, fail, max_score, part, debug):
         return 0
     score = max_score
 
-    # TODO: Probably case depending on how well each performs, I might calculate some bounds later
     if part == 2:
+        # Checks that it doesn't deviate too much from the mean
         mean = stats[part]['mean']
         minimum = stats[part]['minimum']
         maximum = stats[part]['maximum']
@@ -147,17 +163,20 @@ def eval_results(stats, fail, max_score, part, debug):
         if minimum < half or maximum > mean + half:
             score *= 0.5
     elif part == 3:
+        # Check that there's lower key movement than part 2
         if 2 in stats:
             key_move_2 = stats[2]['key_movement']
             key_move_3 = stats[3]['key_movement']
             if key_move_2 < key_move_3:
                 score *= 0.5
     elif part == 4:
+        # Check that there's lower key movement than part 2
         if 2 in stats:
             key_move_2 = stats[2]['key_movement']
             key_move_3 = stats[3]['key_movement']
             if key_move_2 < key_move_3:
                 score *= 0.5
+        # Check that there's lower variance than part 3
         if 3 in stats:
             variance_3 = stats[3]['variance']
             variance_4 = stats[4]['variance']
@@ -176,12 +195,12 @@ if __name__ == '__main__':
                         help='workload to test this on [simple or default]', default='default')
     parser.add_argument('--debug', help='prints checks on create and remove', action='store_true')
 
-    # parser.print_help()
     workloads = {"default": "Workloads/test_workload.txt", "simple": "Workloads/simple_workload.txt"}
     out = parser.parse_args()
     parts = out.p.split(',') if out.p else None
     workload = out.w
     debug = out.debug
+
     # print(part, workload, debug)
 
     if parts != None and (set(parts) - set(['0','1','2','3','4'])):
@@ -196,8 +215,8 @@ if __name__ == '__main__':
         workload = 'default'
 
     workload = workloads[workload]
-    total = 0
-    current = 0
+    total = 0    # total points
+    current = 0  # current points
 
     # Run all tests
     # part == None runs all tests
@@ -236,4 +255,8 @@ if __name__ == '__main__':
             print('part4 was not implemented')
 
     print('---------------------------------------')
-    print('total score: {}/{} ({})'.format(current, total, str(round(current/total * 100, 2))))
+    if current == total == 0:
+        score = 0.0
+    else:
+        score = round(current/total * 100, 2)
+    print('total score: {}/{} ({}%)'.format(current, total, score))
