@@ -217,7 +217,7 @@ Probably not besides the motivation part. "Students often don't know what matter
 ## Is the assignment reasonable?
 Yeah, it seems reasonable. It took me around 4-8 hours to finish and I designed/implemented it; which might make it seem a bit long. But I was also tired and editing stuff to make debugging easier along the way, so it's a little hard to guage how long it'll take. I think it'll definitely be doable with a 5-day period for the target audience while accounting for other classes/homework for a typical student. 
 
-Each of the sections aren't asking for too much in terms of implementation. Most parts are a slight extension of the previous part, so it kind of holds their hand through the assignment; which is definitely more reasonable than just being like, "Do consistent hashing! Have fun!". I don't think I explicitly mention what consistent hashing is, so maybe there is some room for improvement in terms of being clear. 
+Each of the sections don't ask for too much in terms of implementation. Most parts are a slight extension of the previous part, so it kind of holds their hand through the assignment; which is definitely more reasonable than just being like, "Do consistent hashing! Have fun!". I don't think I explicitly mention what consistent hashing is, so maybe there is some room for improvement in terms of being clear. I do believe it's a reasonable assignment as long as someone has at least explained what consistent hashing is on a high level; since otherwise while some motivation/why they're doing something is there, what they're actually supposed to be doing might not be clear.
 
 One could argue that if I tell them too much, it's sort of like hand-holding them through the assignment; or if I tell them too little, it makes the assignment underdefined. So I guess it's a little hard to judge, but if they look up consistent hashing there's a bunch of good resources. Also, it might be interesting to test out the assignment and see what people think of it in terms of whether it's overspecified or underspecified. 
 
@@ -243,6 +243,7 @@ Meta-wise, it was an okay course project, but it would've been interesting to do
 ## Future work
 - Implement everything in Rust and let people do it in either.
 - Come up with more/better ways to test correctness or more tests in general.
+- Rewrite the README to succinctly describe what Consistent Hashing is. 
 - Give this to students and test it out.
 - Make it easier to debug the assignment. 
 - Finish the slides for the presentation. 
@@ -252,7 +253,7 @@ Meta-wise, it was an okay course project, but it would've been interesting to do
 - A visualization tool.
 
 ## Conclusion
-It was the first time I made an educational project, so I think I'm okay with how it turned out. I accomplished what I set out to do, which was create an educational assignment about consistent hashing. Although I'm not sure I can evaluate the outcomes without actually having any outcomes, since no one's done it besides me. 
+It was the first time I made an educational project, so I think I'm okay with how it turned out. I accomplished what I set out to do, which was create an educational assignment about consistent hashing. Although I'm not sure I can evaluate the outcomes without actually having seen any outcomes, since no one's done it besides me; but I do believe it to be reasonable.
 
 ## Course ideas
 ### Project ideas
