@@ -1,6 +1,7 @@
 from shard import Shard 
 import errors
 
+# Monitors the state of the keys and checks the validity of the shard states
 class StateMonitor:
     def __init__(self):
         self.previous = None   # Previous information about which keys belong to which shards
