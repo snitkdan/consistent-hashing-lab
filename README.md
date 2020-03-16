@@ -22,7 +22,7 @@ Some applications include:
 - Redirecting work based on server outages
 - Deciding which thread should run next in a multi-threaded program
 
-There are many other applications and there are many places in which it shows up, so it's good to have some knowledge about some basic load balancing schemes. In our load balancing schemes, we want to distribute the workload as even as possible. One way we might want to do this is through hashing, which has probabilistic guarantees of uniformity; so why don't we just hash all the work and assign it to some corresponding server? The number of servers we have may change, so the assignment of work has to change whenever the numbers of servers changes, which may incur some cost in terms of maintaining the state stored related to the data. 
+There are many other applications and there are many places in which it shows up, so it's good to have some knowledge about some basic load balancing schemes. In our load balancing schemes, we want to distribute the workload as evenly as possible. One way we might want to do this is through hashing, which has probabilistic guarantees of uniformity; so why don't we just hash all the work and assign it to some corresponding server? The number of servers we have may change, so the assignment of work has to change whenever the numbers of servers changes, which may incur some cost in terms of maintaining the state stored related to the data. 
 
 ## Problem setup
 In this lab, you will be implementing basic load balancers for a sharded key-value store, mapping keys to shards and keys to the number of times that the key has appeared within the workload, which can be thought of as the number of times that the key has been accessed. Working through the workload, shards will be added and deleted so you'll have to balance the keys in a consistent manner so that you can update them again later. 
@@ -37,7 +37,7 @@ Servers may hold one or more shards at a time, but in our simple example, we'll 
 - python3
 
 ## Data
-The workload will be based on the [dblp collaboration network](https://snap.stanford.edu/data/com-DBLP.html). A simpler, sample workload will also be provided for you to test/debug things separately . Each load balancer you write will become increasingly more complex until you eventually implement Consistent Hashing. 
+The workload will be based on the [dblp collaboration network](https://snap.stanford.edu/data/com-DBLP.html). A simpler sample workload will also be provided for you to test/debug things separately . Each load balancer you write will become increasingly more complex until you eventually implement Consistent Hashing. 
 
 ### Generating the workload
 1. To download the data, navigate to the Workloads folder, run  
