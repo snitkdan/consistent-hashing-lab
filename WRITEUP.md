@@ -31,6 +31,8 @@ Q4: What might be a problem with this load balancing scheme?
 ## Part 3: Lost in Key-Space
 Q5: What might be a problem with this load balancing scheme? 
 
+> There is a chance that we might hash some servers into much wider ranges than others, thereby not spreading the load evenly amongst servers per key-space slice. 
+
 
 ## Part 4: Consistent Hashing
 Q6: If the number of times we hashed to create slices goes towards infinity, what would we expect to see in the distribution of keys among servers? 
