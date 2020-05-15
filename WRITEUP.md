@@ -47,9 +47,16 @@ get to a state with acceptable key movement traffic and relatively even key-spac
 ## Reflection
 Q8: What are some benefits/drawbacks when increasing the number of times that you hash the server name or consistent hashing in general? 
 
+> See discussion in Q7. 
 
 Q9: How might you balance the workload on a distribution in which some keys were a lot more popular than other keys?
 
+> You could assign a "replication factor" to popular keys, so that instead of 1 shard, they get a collection of shards that they may reside on. All those 
+shards replicate puts linearizably so that the copied are in sync. When a client request comes in, it'll be routed to an arbitrary shard within this collection
+(perhaps `collection[hash(clientId) % num_shards_in_collection]`), which will allow the workload for that key to scale by the number of replicas. 
 
 Q10: How might you balance the workload if it was changing over time question? That is, some keys are popular at some times and others at other times. 
 
+> You could keep track of access frequency of certain keys, and attach to them some replication factor if they're accessed frequently enough. For example, say we have `despacito`, and it gets really popular within the span of some timeout (e.g. 5 mins). After that timeout, we decide to replicate `despacito` across
+K servers (K depending on the load), and have an inbound client request pick the server with the least load at that time. (The big question then becomes how to
+measure load, and maybe that could be approximated using the RTT of a diagnostic Ping). Table Indirection is a popular algorithm to achieve this as well. 
