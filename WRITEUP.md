@@ -21,9 +21,12 @@ key prefixes overwhelmed.
 ## Part 2: The Key is Hashing
 Q3: What happened to the keys when you add or remove shards? 
 
+> Conceptually, the same thing that happened in the previous part: you have to go through each of the shards and possibly move the key to a new shard because the shard assigned to a key is affected by the number of shards (in this case `hash(key) % num_shards` rather than `ord(key[0]) % num_shards`). In this case however, there was a lot less movement because the uniform hashing eliminated some of the skew associated with super common first letters of keys in the previous part (the variance in key movement went down to ~2,000).
+
 
 Q4: What might be a problem with this load balancing scheme?
 
+> There still might be a lot of cost associated with adding/removing shards, because even if there are evenly distributed keys, adding/removing a key will involve talking with possibly all of the other shards, which could incur network costs if there would be coordination involved. 
 
 ## Part 3: Lost in Key-Space
 Q5: What might be a problem with this load balancing scheme? 
