@@ -1,5 +1,6 @@
 from .load_balancer import LoadBalancer
 from utils import hash_fn
+from bisect import bisect_left
 
 """
 Consistent Hashing Load Balancer
@@ -8,23 +9,66 @@ and a by partitioning the key-space, which is defined over the range of
 [0, 2^32].
 """
 class ConsistentHashingLoadBalancer(LoadBalancer):
+    
     def __init__(self):
         super().__init__()
-        # Feel free to add things here
+        self.key_space = []
+        self.key_space_to_shard = {}
+        self.num_rounds = 5
 
     # Adds a shard to the system and rebalance as necessary
     def add_shard(self, shard_name):
         super().add_shard(shard_name)
-        # TODO rebalance
-        raise NotImplementedError
+        self.add_shard_metadata(shard_name)
+        self.rebalance()
 
-    # Remove a shard to the system and rebalance as necessary
+   # Remove a shard to the system and rebalance as necessary
     def remove_shard(self, shard_name):
         kvstore = super().remove_shard(shard_name)
-        # TODO rebalance
-        raise NotImplementedError
+        self.remove_shard_metadata(shard_name)
+        self.rebalance() # all keys need to be re-mapped
+        self.rekey(kvstore, shard_name) # re-assigns keys in removed shard
 
     # Puts a key in a certain shard, incrementing the access count
     def put(self, k):
-        # TODO Figure out where to put it
-        raise NotImplementedError
+        shard = self.shards[self.getShardNameForKey(k)] 
+        shard.put(k, 1)
+
+    """ Metadata Utils """
+
+    def add_shard_metadata(self, shard_name):
+        for i in range(self.num_rounds):
+            val = hash_fn(shard_name + str(i))
+            idx = bisect_left(self.key_space, val)
+            self.key_space.insert(idx, val)
+            self.key_space_to_shard[val] = shard_name
+
+    def remove_shard_metadata(self, shard_name):
+        for i in range(self.num_rounds):
+            val = hash_fn(shard_name + str(i))
+            self.key_space.remove(val)
+            del self.key_space_to_shard[val]
+
+    """ Rebalance Utils """
+
+    # Gets the shard assigned to this key
+    def getShardNameForKey(self, key):
+        val = hash_fn(key)
+        key_slot = bisect_left(self.key_space, val) % len(self.key_space)
+        shard_keyspace = self.key_space[key_slot]
+        shard_name = self.key_space_to_shard[shard_keyspace]
+        return shard_name
+       
+    # Re-assigns all of the keys in the current configuration
+    def rebalance(self):
+        for (shard_name, shard) in self.shards.items():
+            self.rekey(shard.kvstore, shard_name)
+
+    # Re-Assigns the keys in the passed in kvstore
+    def rekey(self, kvstore, shard_name):
+        for key in list(kvstore.keys()):
+            targetShardName = self.getShardNameForKey(key)
+            if targetShardName != shard_name: # have to move this key
+                val = kvstore.pop(key)
+                targetShard = self.shards[targetShardName]
+                targetShard.put(key, val)

@@ -33,13 +33,16 @@ Q5: What might be a problem with this load balancing scheme?
 
 > There is a chance that we might hash some servers into much wider ranges than others, thereby not spreading the load evenly amongst servers per key-space slice. 
 
-
 ## Part 4: Consistent Hashing
 Q6: If the number of times we hashed to create slices goes towards infinity, what would we expect to see in the distribution of keys among servers? 
 
+> The keys would become close to uniform like in the regular hashing. 
 
 Q7: What are some potential problems with this load balancing scheme?
 
+> The problems are of balance: too few rounds of hashing, and you end up with Part3 problems of having uneven key-space slices; too many slices, and you having
+potentially a lot of key movement if one server is added/removed. This approach is less one-size-fits-all, and needs careful tuning in order to 
+get to a state with acceptable key movement traffic and relatively even key-space distribution. 
 
 ## Reflection
 Q8: What are some benefits/drawbacks when increasing the number of times that you hash the server name or consistent hashing in general? 
