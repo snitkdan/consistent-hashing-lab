@@ -1,4 +1,6 @@
 *__pycache__*
 LoadBalancersSoln
 com-dblp.ungraph.txt*
-test_workload.txt
+amazon*.txt
+test_workload*.txt
+test_skewed_workload*.txt
