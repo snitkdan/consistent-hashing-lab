@@ -119,6 +119,20 @@ Implement `LoadBalancers/load_balancer_hash_shard_mult.py`.
 
 **Q10**: How might you balance the workload if it was changing over time question? That is, some keys are popular at some times and others at other times.  
 
+## Part 5: Skewed Workload
+Though the work/rebalancing load may be balanced per-key, this does not solve the problem of varying popularity of certain keys (e.g. despacito may be very popular, overloading the 1 server responsible, compared to the other keys which may not be giving as much work to their respective servers). 
+
+There are a couple of strategies to help alleviate the pressure from popular keys: 
+* Table Indirection: the load on each server is monitored (e.g. number of puts it is getting), and the heavier loaded a server is, 
+the less hash-buckets it gets assigned (can change dynamically). 
+* Power of 2 choices: every key can be serviced by 2 servers, and have a random number generator help clients choose which one to service the client (possibly weighted by load). 
+
+Let's implement these strategies! Implement Table Indirection in `load_balancer_table_indirection.py`. 
+
+Before you can run Part 5 tests, you should generate the skewed workload. 
+1. Follow the same steps for generating the workload, but add in `-s True` to amplify the different key popularities by 10 (widening the differences between key popularity). This creates `test_skewed_workload` which will be the default when running the tests. 
+2. You can also download the Amazon co-purchasing datasets from [here](https://snap.stanford.edu/data/index.html#amazon). If you want to use these new datasets, add in `-d <DATA-SET>.txt` as a flag when running `generate_workload.py`. You should still run with `-s True` since the key skew is not that pronounced without the 10x scaling. To use this in the context of tests, pass in `-w amazon` when running `test_framework.py` for Part 5. 
+
 ## Grading
 Since the testing framework is provided to you, we will just download the files related to the load balancers you implement and run them on a clean copy of the testing framework. If you need to implement any helper functions for the labs, either implement them in the load balancer or inside utils.py. 
 What we're looking for:

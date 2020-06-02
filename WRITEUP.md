@@ -61,15 +61,7 @@ Q10: How might you balance the workload if it was changing over time question? T
 K servers (K depending on the load), and have an inbound client request pick the server with the least load at that time. (The big question then becomes how to
 measure load, and maybe that could be approximated using the RTT of a diagnostic Ping). Table Indirection is a popular algorithm to achieve this as well. 
 
-## Skewed Workloads
+# Part 5: Skewed Workload
 
-### Set-up
-1. If you want different datasets, try downloading one of the Amazon
-co-purchasing datasets from [here](https://snap.stanford.edu/data/index.html#amazon). If you want to use these new datasets, add in `-d <DATA-SET>.txt` as a flag when running `generate_workload.py`
-2. Follow the same steps for generating the workload, but add in `-s True` to amplify the different key popularities by 10 (widening the differences between key popularity). 
-3. Make sure to use `-w` with the appropriate workload when running `python3 test_framework.py -p 5` (if you omit `-w`, it uses a skewed version of the default `test_workload`). 
-
-## Implementation
-
-To deal with varying key popularities, implement table indirection in `load_balancer_table_indirection.py`. 
-TODO: add in full description of table indirection.
+## Reflection
+TODO: add this in
