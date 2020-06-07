@@ -60,3 +60,7 @@ Q10: How might you balance the workload if it was changing over time question? T
 > You could keep track of access frequency of certain keys, and attach to them some replication factor if they're accessed frequently enough. For example, say we have `despacito`, and it gets really popular within the span of some timeout (e.g. 5 mins). After that timeout, we decide to replicate `despacito` across
 K servers (K depending on the load), and have an inbound client request pick the server with the least load at that time. (The big question then becomes how to
 measure load, and maybe that could be approximated using the RTT of a diagnostic Ping). Table Indirection is a popular algorithm to achieve this as well. 
+
+# Part 5: Skewed Workload
+
+**See README (I followed the "recommended" implementation)**

@@ -119,6 +119,28 @@ Implement `LoadBalancers/load_balancer_hash_shard_mult.py`.
 
 **Q10**: How might you balance the workload if it was changing over time question? That is, some keys are popular at some times and others at other times.  
 
+## Part 5: Skewed Workload
+Though the work/rebalancing load may be balanced per-key, this does not solve the problem of varying popularity of certain keys (e.g. despacito may be very popular, overloading the 1 server responsible, compared to the other keys which may not be giving as much work to their respective servers). 
+
+One popular strategy to help alleviate the pressure is called "Table Indirection". The idea is to hash each incoming key to a set of B buckets (constant throughout the lifetime of the system; usually >> num_shards), and each of those buckets maps to exactly 1 shard who will service that bucket at a given point in time. We can dynamically remap which buckets map to which servers without affecting which buckets map to which keys! 
+
+How can we use this to deal with popular keys? We can also introduce a notion of "heat", where the heat of a given bucket is the number of puts it has received. Each server will own 1+ buckets, and the "total heat" of a given server is the sum of the heat of the buckets it owns. 
+
+For the purposes of this lab, we go with the following implementation:
+1. Popularity for all buckets at system startup = 0. 
+2. Have the following as instance variables -> "num_buckets" (use 100), "currAccess" (the number of puts we've had in the entire system since inception), "updateInterval" (how puts before we will attempt to lighten overloaded servers), "minDeviationFactor" (the factor for our rebalance rule; elaborated in step 4)
+3. For a given key, the bucket it corresponds to is `hash(key) % num_buckets`. For each put(k), increment the heat of the corresponding bucket (and total heat for the owning server). 
+4. Every "updateInterval" puts, rebalance the load of any overloaded servers. This involves ensuring that the following condition holds true at the end of rebalancing: `max_of_all_servers(total_heat) <= minDeviationFactor * avg_of_all_servers(total_heat)`. In this way, we're essentially load balancing with a delay of "updateInterval" puts. Recommended approach: move the highest loaded
+bucket from the highest loaded server to the least loaded server, and repeat until convergence. Note: make sure each shard has at least 1 bucket (i.e. it's OK to not satisfy the condition if the overloaded server has just 1 bucket).
+5. When adding a shard, you must ensure either (a) that shard owns at least 1 bucket and (b) after the addition, 
+the load must be balanced (e.g. by rebalancing as in 4.)
+6. When removing a shard, you must ensure that the load is balanced by the end of the removal (e.g. feel free to temporarily
+move all previously owned buckets to a temporary location and rebalance after the fact). 
+
+Before you can run Part 5 tests, you should generate the skewed workload. 
+1. Follow the same steps for generating the workload, but add in `-s True` to amplify the different key popularities by 10 (widening the differences between key popularity). This creates `test_skewed_workload` which will be the default when running the tests. 
+2. You can also download the Amazon co-purchasing datasets from [here](https://snap.stanford.edu/data/index.html#amazon). If you want to use these new datasets, add in `-d <DATA-SET>.txt` as a flag when running `generate_workload.py`. You should still run with `-s True` since the key skew is not that pronounced without the 10x scaling. To use this in the context of tests, pass in `-w amazon` when running `test_framework.py` for Part 5 (note amazon will only work for Part 5).
+
 ## Grading
 Since the testing framework is provided to you, we will just download the files related to the load balancers you implement and run them on a clean copy of the testing framework. If you need to implement any helper functions for the labs, either implement them in the load balancer or inside utils.py. 
 What we're looking for:
