@@ -137,6 +137,8 @@ the load must be balanced (e.g. by rebalancing as in 4.)
 6. When removing a shard, you must ensure that the load is balanced by the end of the removal (e.g. feel free to temporarily
 move all previously owned buckets to a temporary location and rebalance after the fact). 
 
+The implementation should be in `LoadBalancers/load_balancer_table_indirection.py`. 
+
 Before you can run Part 5 tests, you should generate the skewed workload. 
 1. Follow the same steps for generating the workload, but add in `-s True` to amplify the different key popularities by 10 (widening the differences between key popularity). This creates `test_skewed_workload` which will be the default when running the tests. 
 2. You can also download the Amazon co-purchasing datasets from [here](https://snap.stanford.edu/data/index.html#amazon). If you want to use these new datasets, add in `-d <DATA-SET>.txt` as a flag when running `generate_workload.py`. You should still run with `-s True` since the key skew is not that pronounced without the 10x scaling. To use this in the context of tests, pass in `-w amazon` when running `test_framework.py` for Part 5 (note amazon will only work for Part 5).
