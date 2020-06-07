@@ -7,6 +7,7 @@ from LoadBalancers.load_balancer_simple import SimpleLoadBalancer
 from LoadBalancers.load_balancer_hash_key import HashKeyLoadBalancer
 from LoadBalancers.load_balancer_hash_shard_once import HashShardLoadBalancer
 from LoadBalancers.load_balancer_hash_shard_mult import ConsistentHashingLoadBalancer
+from LoadBalancers.load_balancer_table_indirection import TableIndirection
 
 import inspect
 import tqdm
@@ -151,7 +152,7 @@ def part4(workload, debug, stats, max_score=20):
 
 def part5(workload, debug, stats, max_score=20):
     print('------------------------- testing part 5 -----------------------------------')
-    load_balancer = ConsistentHashingLoadBalancer()
+    load_balancer = TableIndirection()
     s, fail = run_test(load_balancer, workload, debug)
     stats[5] = s
     score = eval_results(stats, fail, max_score, 5, debug)
@@ -191,7 +192,7 @@ def eval_results(stats, fail, max_score, part, debug):
             variance_4 = stats[4]['variance']
             if variance_3 < variance_4:
                 score *= 0.5
-
+    
     if score < 0:
         score = 0
     return score
@@ -199,7 +200,7 @@ def eval_results(stats, fail, max_score, part, debug):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='parsing options for running tests')
     parser.add_argument('-p', metavar='part', type=str, 
-                        help='part in the lab [0..4]')
+                        help='part in the lab [0..5]')
     parser.add_argument('-w', metavar='workload', type=str, 
                         help='workload to test this on [simple or default]', default='default')
     parser.add_argument('--debug', help='prints checks on create and remove', action='store_true')
@@ -218,7 +219,7 @@ if __name__ == '__main__':
         exit()
 
     if workload not in ['default', 'simple', 'amazon']:
-        print('There are only two valid workloads \'simple\', \'default\', or \'amazon\'') 
+        print('There are only 3 valid workloads \'simple\', \'default\', or \'amazon\'') 
         exit()
 
     if parts == None and workload != 'simple':
@@ -267,8 +268,7 @@ if __name__ == '__main__':
     if parts == None or '5' in parts:
         try:
             total += 20
-            workloads = {"default": "Workloads/test_skewed_workload.txt", 
-                         "simple": "Workloads/simple_workload.txt", 
+            workloads = {"default": "Workloads/test_skewed_workload.txt",  
                          "amazon": "Workloads/test_skewed_workload_amazon0312.txt"}
             workload = workloads[out.w]
             current += part5(workload, debug, stats, 20)

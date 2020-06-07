@@ -63,5 +63,4 @@ measure load, and maybe that could be approximated using the RTT of a diagnostic
 
 # Part 5: Skewed Workload
 
-## Reflection
-TODO: add this in
+**See README (I followed the "recommended" implementation)**
